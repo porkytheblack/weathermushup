@@ -1,11 +1,15 @@
 import { Flex, chakra, IconButton, Icon } from '@chakra-ui/react'
 import { ChevronLeftIcon, ChevronRightIcon, HamburgerIcon } from "@chakra-ui/icons"
 import Image from 'next/image'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { FlexColCenterBetween, FlexColCenterCenter, FlexColCenterEnd, FlexColCenterStart, FlexRowCenterAround, FlexRowCenterBetween, FlexRowCenterCenter, FlexRowCenterEnd } from '../utils/FlexConfigs'
 import { PlayArrow } from '@mui/icons-material'
+import axios from 'axios'
 
 function Player() {
+    useEffect(()=>{
+       
+    }, [])
   return (
     <Flex justify={"flex-start"} alignItems="flex-start" pos="relative" backgroundImage={"/unsplash_images/raining.jpg"} backgroundSize="cover" backgroundRepeat="no-repeat" width="100vw" height="100vh"  >
             <Flex {...FlexColCenterCenter} width="65%" height="100%"  >
@@ -15,7 +19,7 @@ function Player() {
                                 <HamburgerIcon color="white" fontSize="24px" /> 
                         </IconButton>
                         <chakra.p fontSize="24px" textTransform={"uppercase"} fontWeight={"semibold"} >
-                                Muzik
+                                Muziki
                         </chakra.p>
                     </Flex>
                     <Flex {...FlexColCenterCenter}  w="50%" h="50%"   >
