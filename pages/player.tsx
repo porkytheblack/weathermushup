@@ -7,12 +7,20 @@ import { PlayArrow } from '@mui/icons-material'
 import axios from 'axios'
 import { useAuth0 } from '@auth0/auth0-react'
 import { SpotifyAuthContext } from '../Layout'
-import SpotifyPlayer from '../components/player'
+import { useAtom } from 'jotai'
+import { authToken } from '../jotai/state'
+import usePlayer from '../hooks/usePlayer'
+const NewPlayer = dynamic(import("../components/NewPlayer"), {
+    ssr: false
+})
+import dynamic from 'next/dynamic'
+import { isNull, isUndefined } from 'lodash'
 
 function Player({access_token}: {access_token: string | null}) {
     const {user, logout} = useAuth0()
     const [spotify_token, set_spotify_token] = useState<string>("")
-    const [spotify_refresh_token, set_spotify_refresh_token] = useState<string>("")
+    const [, set_access_token] = useAtom(authToken)
+    const {track} = usePlayer()
    
 
     useEffect(()=>{
@@ -25,9 +33,7 @@ function Player({access_token}: {access_token: string | null}) {
                 const id = res.data.identities[0]
                 console.log(id)
                 set_spotify_token(id.access_token)
-                set_spotify_refresh_token(id.refresh_token)
-              
-               
+                set_access_token(id.access_token)
             }).catch((e)=>{
                 console.log(e)
             })  
@@ -45,32 +51,44 @@ function Player({access_token}: {access_token: string | null}) {
                                 <HamburgerIcon color="white" fontSize="24px" /> 
                         </IconButton>
                         <chakra.p fontSize="24px" textTransform={"uppercase"} fontWeight={"semibold"} >
-                                Muziki
+                                weathermushup
                         </chakra.p>
                     </Flex>
                     <Flex {...FlexColCenterCenter}  w="50%" h="50%"   >
                         <chakra.h3 fontWeight={"semibold"} marginBottom="10px" fontSize="36px"  >
-                            The Nights
+                            {
+                                track?.name
+                            }
                         </chakra.h3>
-                        <chakra.p fontWeight={"normal"} fontSize="16px" >
-                            AVICII
-                        </chakra.p>
+                        <Flex>
+                                {
+                                    track?.artists.map(({name})=><chakra.p key={name} fontWeight={"normal"} fontSize="16px" ml="10px" >
+                                        {name}
+                                    </chakra.p>)
+                                }
+                        </Flex>
+                        
                     </Flex>
                     <Flex {...FlexColCenterEnd} w="50%" h="30%"   className="w-full" >
-                           <SpotifyPlayer auth_token={spotify_token} /> 
+                           <NewPlayer key={spotify_token} />
                     </Flex>
                 </Flex>
             </Flex>
             <Flex {...FlexColCenterCenter} width="35%" height="100%" bg="transparent" backdropFilter={"auto"} backdropBlur={"12px"}  >
                 <Flex {...FlexColCenterStart} width="80%"   >
                     <Flex width="300PX" height="300px" borderRadius={"10px"} marginBottom="20px" overflow="hidden" >
-                            <Image src={"/unsplash_images/you.jpg" } width={300} height={300}  />
+                            { isNull(track) && <Image alt="track_image" src={ "/unsplash_images/you.jpg"} width={300} height={300}  />}
+                            {!isNull(track) && <Image alt="track" src={track.album.images[0].url} width={300} height={300} />  }
                     </Flex>
                     <chakra.p width="100%" display={"flex"} {...FlexRowCenterCenter} fontSize={"20px"} >
-                            The Nights
+                            {
+                                track?.name
+                            }
                     </chakra.p>
-                    <chakra.p width="100%" color="rgba(255,255,255,0.4)" display={"flex"} {...FlexRowCenterCenter} marginTop="5px" fontSize={"16px"} >
-                            AVICCI
+                    <chakra.p href="" width="100%" color="rgba(255,255,255,0.4)" display={"flex"} {...FlexRowCenterCenter} marginTop="5px" fontSize={"16px"} >
+                            {
+                                track?.artists[0].name
+                            }  
                     </chakra.p>
                     
                 </Flex>
@@ -85,6 +103,7 @@ export default Player
 
 
 export async function getServerSideProps(context: any ){
+    console.log(context.req.cookies)
     return axios.post("https://dev-1r9889va.us.auth0.com/oauth/token", {
         client_id: "f6Lvhk6x1hMTJCbGD1utLZR0gEocY19o",
         client_secret: "7SdlTy3YpmsgOIGyCslJezAcmPZcP-m0slaVDu54rplx4mOsQ6Vfa7M5EN5c2oXo",

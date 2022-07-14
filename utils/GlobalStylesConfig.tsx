@@ -9,6 +9,7 @@ function GlobalStylesConfig() {
         }
         html, body{
             overflow-x:hidden;
+            
         }
     `} />
   )
