@@ -1,5 +1,8 @@
+import { useAuth0 } from '@auth0/auth0-react'
 import { isUndefined } from '@chakra-ui/utils'
-import React, { createContext, ReactNode, useState } from 'react'
+import { isNull } from 'lodash'
+import { useRouter } from 'next/router'
+import React, { createContext, ReactNode, useEffect, useState } from 'react'
 import ScrollObserver from '../helpers/scroll-observer'
 
 export interface player_interface  {
@@ -19,6 +22,16 @@ export interface SpotifyAuthContextInterface {
 export const SpotifyAuthContext = createContext<SpotifyAuthContextInterface>({spotify_refres_token: "", spotify_token: ""})
 
 function Layout({children}:{children: ReactNode}) {
+
+  const {user, isLoading, isAuthenticated, error} = useAuth0()
+  const {push} = useRouter()
+
+  useEffect(()=>{
+      if(!isNull(user) && !isUndefined(user) && isAuthenticated && !isLoading && isNull(error)){
+        push("/player")
+      } 
+  }, [,user, error, isLoading, isAuthenticated, push])
+
   const [spotify_refres_token, set_spotify_refresh_token] = useState<string>("")
   const [spotify_token, set_spotify_token] = useState<string>("")
   const get_auth = ( {token, refresh} : {token: string, refresh: string})=>{

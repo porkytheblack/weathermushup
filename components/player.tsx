@@ -4,7 +4,6 @@ import { Pause, PlayArrow } from '@mui/icons-material'
 import axios from 'axios'
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import { useQuery } from 'react-query'
-import { SpotifyAuthContext } from '../Layout'
 import { FlexColCenterCenter, FlexRowCenterAround, FlexRowCenterCenter } from '../utils/FlexConfigs'
 
 function SpotifyPlayer({auth_token} : {auth_token: string}) {
