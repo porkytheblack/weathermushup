@@ -11,12 +11,12 @@ function useTracks() {
     const playlists_query  = useQuery([current_playlist, access_token],()=> axios.get("/api/spotify/weathertracks", {
         params: {   
             access_token: access_token,              
-            current_weather: "modern baseball"
+            current_weather: "imagine dragons"
         }   
     }).then((res)=>res.data))              
     const [track_uris, set_track_uris] = useState<string[]>([])
 
-    useEffect(()=>{
+    useEffect(()=>{    
         console.log("Access token", access_token)
         const {isLoading, isError, data} = playlists_query
         if(isLoading || isError || data == null || typeof data == "undefined" ) return ()=>{}
