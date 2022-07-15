@@ -15,6 +15,7 @@ const NewPlayer = dynamic(import("../components/NewPlayer"), {
 })
 import dynamic from 'next/dynamic'
 import { isNull, isUndefined } from 'lodash'
+import { WebPlaybackSDK } from 'react-spotify-web-playback-sdk'
 
 function Player({access_token}: {access_token: string | null}) {
     const {user, logout} = useAuth0()
@@ -70,7 +71,10 @@ function Player({access_token}: {access_token: string | null}) {
                         
                     </Flex>
                     <Flex {...FlexColCenterEnd} w="50%" h="30%"   className="w-full" >
-                           <NewPlayer key={spotify_token} />
+                    <WebPlaybackSDK initialDeviceName='weathermushup v.1.0.0' getOAuthToken={(cb)=>cb(isNull(access_token) ? " " : access_token)} initialVolume={0.5} >
+                    <NewPlayer key={spotify_token} />
+                    </WebPlaybackSDK>
+                           
                     </Flex>
                 </Flex>
             </Flex>
