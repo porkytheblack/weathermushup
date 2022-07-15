@@ -16,6 +16,7 @@ const NewPlayer = dynamic(import("../components/NewPlayer"), {
 })
 import dynamic from 'next/dynamic'
 import { isNull, isUndefined } from 'lodash'
+import LocationButton from '../components/LocationButton'
 
 function Player({access_token}: {access_token: string | null}) {
     const {user, logout} = useAuth0()
@@ -49,7 +50,7 @@ function Player({access_token}: {access_token: string | null}) {
     useEffect(()=>{
         window?.player?.getCurrentState().then((state: Spotify.PlaybackState | null)=>{
             if(state){
-                console.log("track")
+                console.log(state.track_window.current_track)
                 set_track(state.track_window.current_track)
             }
         }).catch((e)=>{
@@ -106,7 +107,7 @@ function Player({access_token}: {access_token: string | null}) {
                     </chakra.p>
                     
                 </Flex>
-                
+                <LocationButton/>
             </Flex>
             
     </Flex>
