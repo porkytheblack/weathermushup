@@ -6,7 +6,7 @@ import axios from 'axios'
 import { useAtom } from 'jotai'
 import { isNull, isUndefined } from 'lodash'
 import React, { useEffect, useState } from 'react'
-import { addPlayer, authToken, player_state_atom, SpotifyPlayerInstance, tick_up } from '../jotai/state'
+import { addPlayer, authToken, CurrentDeviceAtom, player_state_atom, SpotifyPlayerInstance, tick_up } from '../jotai/state'
 import { FlexColCenterCenter, FlexRowCenterAround } from '../utils/FlexConfigs'
 import useTracks from './../hooks/useTracks'
 import SpotifyPlayerComponent from './SpotifyPlayer'
@@ -23,7 +23,7 @@ function NewPlayer() {
     const [, set_state] = useAtom(player_state_atom)
     const [SpotifyPlayer, set_player] = useState<null | Spotify.Player>(null)
     const [player_state, set_player_state] = useState<"ready" | "not_ready"> ("not_ready")
-    const [current_device, set_current_device  ] = useState<string>("")
+    const [current_device, set_current_device  ] = useAtom(CurrentDeviceAtom)
     const [initialization_error, set_initialization_error] = useState<boolean>(false)
     const [track, set_track]  = useState<Spotify.Track| null>(null)
     const [paused, set_paused] = useState<boolean>(true)
@@ -33,18 +33,20 @@ function NewPlayer() {
     const [, add_player] = useAtom(addPlayer)
     const [, up] = useAtom(tick_up)
 
-    const {track_uris, loading_playlists, error_playlists, pl_error} = useTracks()
+    const {track_uris, loading_playlists, error_playlists, pl_error, fetch_next} = useTracks()
 
     useEffect(()=>{
         
         if(access_token == null) return ()=>{}
         if(track_uris.length == 0 || loading_playlists || error_playlists || pl_error !== null) return ()=>{}
+        if(current_device.length !== 0) return ()=>{}
         const script = document.createElement("script")
             script.src = "https://sdk.scdn.co/spotify-player.js"
             script.async = true             
             document.body.appendChild(script)
            
             window.onSpotifyWebPlaybackSDKReady  = () =>{
+
                     const player = new window.Spotify.Player({
                         name: "Web Playback SDK",
                         getOAuthToken: (cb) => {cb(access_token)},
@@ -155,8 +157,16 @@ function NewPlayer() {
     const nextTrack = () =>{
         if(isNull(SpotifyPlayer)) return console.log("Player null")
         if(isUndefined(SpotifyPlayer)) return console.log("player is undefined")
-        window.player.nextTrack().then(()=>console.log("Next track")).catch((e)=>console.error(e))
-     }
+        window.player.getCurrentState().then((state)=>{
+            if(!isNull(state) && !isUndefined(state)){
+                if(state.track_window.next_tracks.length == 0){
+                    fetch_next()
+                }else{
+                    window.player.nextTrack().then(()=>console.log("Next track")).catch((e)=>console.error(e))
+                }
+            }
+        })
+     } 
     const prevTrack = () =>{
         if(isNull(SpotifyPlayer)) return console.log("Player null")
         if(isUndefined(SpotifyPlayer)) return console.log("Player is undefined")
@@ -171,7 +181,7 @@ function NewPlayer() {
 
 
   return (
-    <SpotifyPlayerComponent seek={seek} current_device={current_device} paused={paused} player={SpotifyPlayer} duration={duration} position={position} nextTrack={nextTrack} prevTrack={prevTrack} player_state={player_state} toggle_play_pause={toggle_play_pause} />
+    <SpotifyPlayerComponent seek={seek}  paused={paused} player={SpotifyPlayer} duration={duration} position={position} nextTrack={nextTrack} prevTrack={prevTrack} player_state={player_state} toggle_play_pause={toggle_play_pause} />
   )
 }
 

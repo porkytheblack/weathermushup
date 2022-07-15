@@ -22,3 +22,13 @@ export const tick_up = atom(null, (get, set, _)=>{
     set(state_tick, get(state_tick)+1 )
 })
 
+export const user_location_atom = atomWithStorage<string | {
+    lon: number,
+    lat: number
+}| null>("user_location",null)
+
+export const current_track_atom = atomWithStorage<string| null>("current_track_uri", null )
+
+export const next_uri_atom = atom<string>("")
+
+
