@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Flex, chakra, IconButton, Icon } from '@chakra-ui/react'
 import { ChevronLeftIcon, ChevronRightIcon, HamburgerIcon } from "@chakra-ui/icons"
 import Image from 'next/image'
@@ -8,7 +9,7 @@ import axios from 'axios'
 import { useAuth0 } from '@auth0/auth0-react'
 import { SpotifyAuthContext } from '../Layout'
 import { useAtom } from 'jotai'
-import { authToken } from '../jotai/state'
+import { authToken, player_state_atom, state_tick } from '../jotai/state'
 import usePlayer from '../hooks/usePlayer'
 const NewPlayer = dynamic(import("../components/NewPlayer"), {
     ssr: false
@@ -20,7 +21,9 @@ function Player({access_token}: {access_token: string | null}) {
     const {user, logout} = useAuth0()
     const [spotify_token, set_spotify_token] = useState<string>("")
     const [, set_access_token] = useAtom(authToken)
-    const {track} = usePlayer()
+    const [track, set_track] = useState<Spotify.Track| null>(null)
+    const [state, ] = useAtom(player_state_atom)
+    const [tick, ]  =useAtom(state_tick)
    
 
     useEffect(()=>{
@@ -42,6 +45,17 @@ function Player({access_token}: {access_token: string | null}) {
      
 
     }, [,user])
+
+    useEffect(()=>{
+        window?.player?.getCurrentState().then((state: Spotify.PlaybackState | null)=>{
+            if(state){
+                console.log("track")
+                set_track(state.track_window.current_track)
+            }
+        }).catch((e)=>{
+            console.log("Unable to get current state")
+        })
+    }, [state,tick])
   return (
     <Flex justify={"flex-start"} alignItems="flex-start" pos="relative" backgroundImage={"/unsplash_images/raining.jpg"} backgroundSize="cover" backgroundRepeat="no-repeat" width="100vw" height="100vh"  >
             <Flex {...FlexColCenterCenter} width="65%" height="100%"  >
@@ -70,7 +84,7 @@ function Player({access_token}: {access_token: string | null}) {
                         
                     </Flex>
                     <Flex {...FlexColCenterEnd} w="50%" h="30%"   className="w-full" >
-                           <NewPlayer key={spotify_token} />
+                           <NewPlayer/>
                     </Flex>
                 </Flex>
             </Flex>
@@ -103,7 +117,6 @@ export default Player
 
 
 export async function getServerSideProps(context: any ){
-    console.log(context.req.cookies)
     return axios.post("https://dev-1r9889va.us.auth0.com/oauth/token", {
         client_id: "f6Lvhk6x1hMTJCbGD1utLZR0gEocY19o",
         client_secret: "7SdlTy3YpmsgOIGyCslJezAcmPZcP-m0slaVDu54rplx4mOsQ6Vfa7M5EN5c2oXo",
@@ -120,6 +133,7 @@ export async function getServerSideProps(context: any ){
             }
         }
     }).catch((e)=>{
+        console.log("Error fetching access token")
         console.log(e)
         return {
             props: {

@@ -1,26 +1,17 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons'
 import { Flex, Icon, IconButton, RangeSlider, RangeSliderFilledTrack, RangeSliderThumb, RangeSliderTrack } from '@chakra-ui/react'
 import { Pause, PlayArrow } from '@mui/icons-material'
 import axios from 'axios'
 import { useAtom } from 'jotai'
 import { isNull, isUndefined } from 'lodash'
-import React, { useEffect, useState } from 'react'
-import { addPlayer, authToken, player_state_atom, SpotifyPlayerInstance, tick_up } from '../jotai/state'
+import React, { ReactNode, useEffect, useState } from 'react'
+import { addPlayer, authToken, SpotifyPlayerInstance } from '../jotai/state'
 import { FlexColCenterCenter, FlexRowCenterAround } from '../utils/FlexConfigs'
 import useTracks from './../hooks/useTracks'
-import SpotifyPlayerComponent from './SpotifyPlayer'
-import TrackComponent from './TrackComponent'
 
-declare global {
-    interface Window {
-        player: Spotify.Player
-    }
-}
 
-function NewPlayer() {
+function NewPlayer({children, get_player}:{children: ReactNode | ReactNode[], get_player: (pl: Spotify.Player)=> void}) {
     const [access_token, ] = useAtom(authToken)
-    const [, set_state] = useAtom(player_state_atom)
     const [SpotifyPlayer, set_player] = useState<null | Spotify.Player>(null)
     const [player_state, set_player_state] = useState<"ready" | "not_ready"> ("not_ready")
     const [current_device, set_current_device  ] = useState<string>("")
@@ -31,14 +22,10 @@ function NewPlayer() {
     const [position, set_position] = useState<number>(0)
     const [active, set_active] = useState<boolean>(false)
     const [, add_player] = useAtom(addPlayer)
-    const [, up] = useAtom(tick_up)
-
-    const {track_uris, loading_playlists, error_playlists, pl_error} = useTracks()
 
     useEffect(()=>{
         
         if(access_token == null) return ()=>{}
-        if(track_uris.length == 0 || loading_playlists || error_playlists || pl_error !== null) return ()=>{}
         const script = document.createElement("script")
             script.src = "https://sdk.scdn.co/spotify-player.js"
             script.async = true             
@@ -51,45 +38,39 @@ function NewPlayer() {
                         volume: 0.5
                     }) 
                     add_player()
-                    window.player = player
-                    window.player.addListener('ready', (data)=>{
-                        set_state("ready")
+                    player.addListener('ready', (data)=>{
                         set_player(player)
                         set_player_state("ready")
                         set_current_device(data.device_id)
-                        up()
                     })  
  
-                    window.player.addListener('not_ready', (data: any)=>{
-                        set_state("not_ready")
+                    player.addListener('not_ready', (data: any)=>{
                         console.log("The player is not ready")
                         set_player_state("not_ready") 
-                        up()
+
                     })
 
-                    window.player.addListener("initialization_error", ()=>{
+                    player.addListener("initialization_error", ()=>{
                         console.log("An error occured during initialization")
                         set_initialization_error(true)
-                        up()
                     })
 
-                    window.player.addListener("authentication_error", (err)=>{
+                    player.addListener("authentication_error", (err)=>{
                         console.log(err)
                         console.log("Failed to authenticate user")
                     })
 
-                    window.player.addListener("autoplay_failed", ()=>{
+                    player.addListener("autoplay_failed", ()=>{
                         console.log("Auto play error")
                         
                     })  
 
-                    window.player.addListener('player_state_changed', ((state) => {
+                    player.addListener('player_state_changed', ((state) => {
                             if(!state){
                                 set_active(false)
                                 return  null  
                             }
                             console.log(state)
-                            up()
                             set_active(true)
                             set_track(state.track_window.current_track)
                             set_paused(state.paused)
@@ -98,39 +79,34 @@ function NewPlayer() {
                             set_position((state.position * 100)/state.duration)
                             
                     }))
-                    axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${current_device}`,JSON.stringify({ uris: track_uris }), {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${access_token}`    
-                        }
-                    }).then((res)=>{
-                        console.log("Connected successfully")
-                        window.player.resume()
-                    }).catch((e)=>{
-                        console.log(e)    
-                        console.log("An error occured while making the request")
-                        })
-                    window.player.connect()
-
+                   
+                    player.connect()
+                    get_player(player)
                       
             }
 
             return ()=>{
-                if(!isNull(SpotifyPlayer)){
-                   console.log(SpotifyPlayer)
-                   console.log("Unmounting")
-                   SpotifyPlayer.disconnect()
-                   window.player.disconnect()
                 
-                }
                 
             }
-    },[access_token, track_uris, loading_playlists, error_playlists, pl_error])
+    },[access_token])
 
     // useEffect(()=>{
     //     if(isNull(SpotifyPlayer)) return ()=>{}
     //     if(track_uris.length == 0 || loading_playlists || error_playlists || pl_error !== null) return ()=>{}
     //     if(current_device.length == 0) return ()=>{}
+    //     axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${current_device}`,JSON.stringify({ uris: track_uris }), {
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //             'Authorization': `Bearer ${access_token}`    
+    //         }
+    //     }).then((res)=>{
+    //         console.log("Connected successfully")
+    //         window.player.resume()
+    //     }).catch((e)=>{
+    //         console.log(e)    
+    //         console.log("An error occured while making the request")
+    //         })
         
     // }, [SpotifyPlayer, track_uris,current_device,loading_playlists,error_playlists,pl_error])
 
@@ -171,7 +147,9 @@ function NewPlayer() {
 
 
   return (
-    <SpotifyPlayerComponent seek={seek} current_device={current_device} paused={paused} player={SpotifyPlayer} duration={duration} position={position} nextTrack={nextTrack} prevTrack={prevTrack} player_state={player_state} toggle_play_pause={toggle_play_pause} />
+    <Flex width="100%" {...FlexColCenterCenter}  >
+        {children}
+    </Flex>        
   )
 }
 

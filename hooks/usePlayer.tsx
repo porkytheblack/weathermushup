@@ -1,15 +1,15 @@
 import axios from 'axios'
 import { useAtom } from 'jotai'
-import { isUndefined } from 'lodash'
+import { isNull, isUndefined } from 'lodash'
 import React, { useEffect, useState } from 'react'
-import { authToken } from '../jotai/state'
+import { authToken, CurrentDeviceAtom, SpotifyPlayerInstance } from '../jotai/state'
 import useTracks from './useTracks'
 
 function usePlayer() {
+    const [current_device, set_current_device] = useAtom(CurrentDeviceAtom)
     const [access_token, ] = useAtom(authToken)
-    const [SpotifyPlayer, set_player] = useState<Spotify.Player | undefined>(undefined)
+    const [SpotifyPlayer, set_player] = useAtom(SpotifyPlayerInstance)
     const [player_state, set_player_state] = useState<"ready" | "not_ready"> ("not_ready")
-    const [current_device, set_current_device  ] = useState<string>("")
     const [initialization_error, set_initialization_error] = useState<boolean>(false)
     const [track, set_track]  = useState<Spotify.Track| null>(null)
     const [paused, set_paused] = useState<boolean>(true)
@@ -21,23 +21,26 @@ function usePlayer() {
 
     useEffect(()=>{
         if(access_token == null) return ()=>{}
+        if(!isNull(SpotifyPlayer)) return ()=>{}
         const script = document.createElement("script")
             script.src = "https://sdk.scdn.co/spotify-player.js"
             script.async = true             
             document.body.appendChild(script)
            
             window.onSpotifyWebPlaybackSDKReady  = () =>{
-                    const player = new window.Spotify.Player({
+                    const player = new window.Spotify.Player({   
                         name: "Web Playback SDK",
                         getOAuthToken: (cb) => {cb(access_token)},
                         volume: 1
                     }) 
-            
+                    console.log("New Player 🥸🥸")
                     if(typeof player == "undefined") return ()=>{}
                     player.addListener('ready', (data)=>{
                         set_player(player)
                         set_player_state("ready")
-                        set_current_device(data.device_id)
+                        if(current_device == "") {
+                            set_current_device(data.device_id)
+                        }
                     })
  
                     player.addListener('not_ready', (data: any)=>{
@@ -82,36 +85,19 @@ function usePlayer() {
             }
 
             return ()=>{
-                console.log(SpotifyPlayer)
-                SpotifyPlayer?.disconnect()
-                console.log(SpotifyPlayer)
                 console.log("unmounting")
+                set_player(null)
             }
-    }, [])
+    }, [access_token])
 
-    useEffect(()=>{
-        if(track_uris.length == 0 || loading_playlists || error_playlists || pl_error !== null) return ()=>{}
-        if(current_device.length == 0) return ()=>{}
-        axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${current_device}`,JSON.stringify({ uris: [track_uris[0]] }), {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${access_token}`    
-                }
-            }).then((res)=>{
-                console.log("Connected successfully")
-                SpotifyPlayer?.resume()
-            }).catch((e)=>{
-                console.log(e) 
-                console.log("An error occured while making the request")
-                })
-    }, [,loading_playlists, error_playlists, pl_error, track_uris, player_state])
+    
 
     
 
     const toggle_play_pause = () =>{
         console.log("Ok I get it")
         console.log(SpotifyPlayer)
-        if( isUndefined(SpotifyPlayer)) return console.log("Player is undefined")
+        if( isNull(SpotifyPlayer)) return console.log("Player is undefined")
         console.log("Not undefined")
 
         if(paused) SpotifyPlayer.resume().then(()=>{
@@ -125,11 +111,11 @@ function usePlayer() {
     }
 
     const nextTrack = () =>{
-        if(isUndefined(SpotifyPlayer)) return console.log("player is undefined")
+        if(isNull(SpotifyPlayer)) return console.log("player is undefined")
         SpotifyPlayer.nextTrack().then(()=>console.log("Next track")).catch((e)=>console.error(e))
      }
     const prevTrack = () =>{
-        if(isUndefined(SpotifyPlayer)) return console.log("Player is undefined")
+        if(isNull(SpotifyPlayer)) return console.log("Player is undefined")
         SpotifyPlayer.previousTrack().then(()=>console.log("Previous track")).catch((e)=>console.error(e))
     }
 
