@@ -2,7 +2,7 @@
 import { Flex, chakra, IconButton, Icon } from '@chakra-ui/react'
 import { ChevronLeftIcon, ChevronRightIcon, HamburgerIcon } from "@chakra-ui/icons"
 import Image from 'next/image'
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { FlexColCenterBetween, FlexColCenterCenter, FlexColCenterEnd, FlexColCenterStart, FlexRowCenterAround, FlexRowCenterBetween, FlexRowCenterCenter, FlexRowCenterEnd } from '../utils/FlexConfigs'
 import { PlayArrow } from '@mui/icons-material'
 import axios from 'axios'
@@ -25,6 +25,8 @@ function Player({access_token}: {access_token: string | null}) {
     const [track, set_track] = useState<Spotify.Track| null>(null)
     const [state, ] = useAtom(player_state_atom)
     const [tick, ]  =useAtom(state_tick)
+
+    
    
 
     useEffect(()=>{
@@ -119,8 +121,8 @@ export default Player
 
 export async function getServerSideProps(context: any ){
     return axios.post("https://dev-1r9889va.us.auth0.com/oauth/token", {
-        client_id: "f6Lvhk6x1hMTJCbGD1utLZR0gEocY19o",
-        client_secret: "7SdlTy3YpmsgOIGyCslJezAcmPZcP-m0slaVDu54rplx4mOsQ6Vfa7M5EN5c2oXo",
+        client_id: process.env.client_id,
+        client_secret: process.env.client_secret,
         audience: "https://dev-1r9889va.us.auth0.com/api/v2/",
         grant_type: "client_credentials"
     }, {

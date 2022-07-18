@@ -1,7 +1,9 @@
-import { Button } from '@chakra-ui/react'
+import { Button, Text } from '@chakra-ui/react'
+import { LocationOn } from '@mui/icons-material'
 import { useAtom } from 'jotai'
 import React from 'react'
 import { user_location_atom } from '../jotai/state'
+import { FlexRowCenterCenter } from '../utils/FlexConfigs'
 
 function LocationButton() {
     const [,set_location] = useAtom(user_location_atom)
@@ -19,8 +21,11 @@ function LocationButton() {
         }
     }
   return (
-    <Button onClick={get_location} >
-        Get Location
+    <Button w="300px" _hover={{background: "#fa175f" }} bg="transparent" onClick={get_location} >
+        <LocationOn sx={{color: "white"}} />
+        <Text color="white" fontSize="18px" ml="20px" fontWeight={"bold"} >
+        Get my location
+        </Text>
     </Button>
   )
 }

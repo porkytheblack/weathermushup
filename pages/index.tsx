@@ -11,7 +11,7 @@ const Home: NextPage = () => {
   const {push} = useRouter()
   useEffect(()=>{
     if(isLoading || error || user == null) return ()=>{ } 
-    push("/player")
+    push("/setup")
   }, [, isLoading, user, error])
   return (
     <Flex width="100vw" backgroundImage={"/unsplash_images/music_waves.png"} backgroundSize="cover" backgroundRepeat={"no-repeat"}  height="100vh" {...FlexColCenterCenter}  >
@@ -24,11 +24,11 @@ const Home: NextPage = () => {
             </Flex>
             <Flex {...FlexColCenterCenter} w="50%" h="100%"  >
                 {(!isLoading  ) && <chakra.button borderRadius={"999px"} onClick={()=>loginWithPopup().then(()=>{
-                    push("/player")
+                    push("/setup")
                 }).catch((e)=>{
 
                 })}  overflow="hidden" display={"flex"} flexDir="row" alignItems="center" justifyContent={"space-between"} bg="none"  _active={{border: "1px solid white", scale: "0.95"}} _pressed={{outline: "1px solid white", scale: "0.95"}} padding="5px 10px"  >
-                        <Image src="/icons/spotify.svg" height="50px"  width="50px"  />
+                        <Image src="/icons/spotify.svg" height="50px"  width="50px" alt="spotify_icon" />
                         <chakra.p marginLeft={"20px"} >
                           Sign In
                         </chakra.p>

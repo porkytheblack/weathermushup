@@ -22,6 +22,11 @@ export const tick_up = atom(null, (get, set, _)=>{
     set(state_tick, get(state_tick)+1 )
 })
 
+export const state_tick_device  = atom<number>(0)
+export const tick_up_device = atom(null, (get, set, _)=>{
+    set(state_tick, get(state_tick)+1 )
+})
+
 export const user_location_atom = atomWithStorage<string | {
     lon: number,
     lat: number
@@ -30,5 +35,19 @@ export const user_location_atom = atomWithStorage<string | {
 export const current_track_atom = atomWithStorage<string| null>("current_track_uri", null )
 
 export const next_uri_atom = atom<string>("")
+
+export const setup_atom = atomWithStorage<{
+    location: null | string,
+    mood: string | null,
+    weather: string | null,
+    artist: string | null,
+    genre: string | null
+}>("setup", {
+    location: null,
+    mood: null,
+    weather: null,
+    artist: null,
+    genre: null
+})
 
 

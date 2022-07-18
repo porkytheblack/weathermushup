@@ -4,7 +4,7 @@ import { isNull, isNumber, isString, isUndefined } from 'lodash'
 import { parseUrl } from 'next/dist/shared/lib/router/utils/parse-url'
 import React, { useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
-import { authToken, CurrentDeviceAtom, current_track_atom, next_uri_atom } from '../jotai/state'
+import { authToken, CurrentDeviceAtom, current_track_atom, next_uri_atom, tick_up_device } from '../jotai/state'
 
 function useTracks() {
     const [access_token, ] = useAtom(authToken)
@@ -12,7 +12,9 @@ function useTracks() {
     const [current_playlist, set_current_playlist] = useState<string>("")
     const [current_query, set_current_query] = useState<string>("Running up the hill by kate bush")
     const [next_uri, set_next_uri] = useAtom(next_uri_atom)
-    const [current_device,] = useAtom(CurrentDeviceAtom)
+    const [current_device, set_it] = useAtom(CurrentDeviceAtom)
+    const [fetch_limit, ] = useState(20)
+    const [, up_device] = useAtom(tick_up_device)
     // const [current_track, set_track ] = useAtom(current_track_atom)
     
     const playlists_query  = useQuery([current_playlist, access_token, offset_filter],()=> axios.get(`https://api.spotify.com/v1/search?q=${current_query}&type=track${offset_filter}`, {
@@ -39,6 +41,9 @@ function useTracks() {
         }
     }).catch((e)=>{
         console.log(e) 
+        up_device()
+        set_it("")
+        window.player = null
         }), {
             enabled: false
         })
@@ -61,12 +66,12 @@ function useTracks() {
         if(isLoading || isError || data == null || typeof data == "undefined" ) return ()=>{}
         player_query.refetch()
         console.log("New Refetch")
-    }, [current_device,track_uris])
+    }, [current_device,track_uris,])  
 
     const fetch_next = (prev?: boolean) =>{
         const parsed = parseUrl(next_uri)
         if(isUndefined(prev) || (!isUndefined(prev) && !prev)){
-            var offset = `&offset=${parsed.query.offset}&limit=${parsed.query.limit}`
+            var offset = `&offset=${parsed.query.offset}&limit=${fetch_limit}`
             set_offset_filter(offset)
         }else{
             if(isString(parsed.query.offset)  && isString(parsed.query.limit)){
@@ -74,7 +79,7 @@ function useTracks() {
                 var m = parseInt(parsed.query.limit)
                 if(isNumber(n*m)){
                     if(n !== 0){
-                        var off = `&offset=${n-m}&limit=${m}`
+                        var off = `&offset=${n-1}&limit=${1}`
                         set_offset_filter(off)
                     }
                 }
@@ -96,7 +101,8 @@ function useTracks() {
         pl_error: playlists_query.error,
         track_uris,
         fetch_next,
-        offset_filter
+        offset_filter,
+        try_refetch: player_query.refetch
     }
   )
 }

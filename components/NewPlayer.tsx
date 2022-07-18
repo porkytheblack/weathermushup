@@ -6,7 +6,7 @@ import axios from 'axios'
 import { useAtom } from 'jotai'
 import { isNull, isUndefined } from 'lodash'
 import React, { useEffect, useState } from 'react'
-import { addPlayer, authToken, CurrentDeviceAtom, player_state_atom, SpotifyPlayerInstance, tick_up } from '../jotai/state'
+import { addPlayer, authToken, CurrentDeviceAtom, player_state_atom, SpotifyPlayerInstance, state_tick_device, tick_up } from '../jotai/state'
 import { FlexColCenterCenter, FlexRowCenterAround } from '../utils/FlexConfigs'
 import useTracks from './../hooks/useTracks'
 import SpotifyPlayerComponent from './SpotifyPlayer'
@@ -14,7 +14,7 @@ import TrackComponent from './TrackComponent'
 
 declare global {
     interface Window {
-        player: Spotify.Player
+        player: Spotify.Player | null
     }
 }
 
@@ -32,14 +32,15 @@ function NewPlayer() {
     const [active, set_active] = useState<boolean>(false)
     const [, add_player] = useAtom(addPlayer)
     const [, up] = useAtom(tick_up)
+    const [tick, ] = useAtom(state_tick_device)
 
     const {track_uris, loading_playlists, error_playlists, pl_error, fetch_next} = useTracks()
 
     useEffect(()=>{
-        
+        console.log("New Device 40")
         if(access_token == null) return ()=>{}
         if(track_uris.length == 0 || loading_playlists || error_playlists || pl_error !== null) return ()=>{}
-        if(current_device.length !== 0) return ()=>{}
+        if(current_device.length !== 0) return ()=>{} 
         const script = document.createElement("script")
             script.src = "https://sdk.scdn.co/spotify-player.js"
             script.async = true             
@@ -82,7 +83,6 @@ function NewPlayer() {
 
                     window.player.addListener("autoplay_failed", ()=>{
                         console.log("Auto play error")
-                        
                     })  
 
                     window.player.addListener('player_state_changed', ((state) => {
@@ -107,6 +107,7 @@ function NewPlayer() {
                         }
                     }).then((res)=>{
                         console.log("Connected successfully")
+                        if(!isNull(window.player))
                         window.player.resume()
                     }).catch((e)=>{
                         console.log(e)    
@@ -122,6 +123,7 @@ function NewPlayer() {
                    console.log(SpotifyPlayer)
                    console.log("Unmounting")
                    SpotifyPlayer.disconnect()
+                   if(!isNull(window.player))
                    window.player.disconnect()
                 
                 }
@@ -144,10 +146,12 @@ function NewPlayer() {
         if( isNull(SpotifyPlayer)) return console.log("Player is null")
         console.log("Not null")
         if(isNull(SpotifyPlayer)) return console.log("Player null")
+        if(!isNull(window.player))
         if(paused) return window.player.resume().then(()=>{
             set_paused(false)
             console.log("Resumed the player")   
         }).catch((e)=>console.error(e))
+        if(!isNull(window.player))
         if(!paused) return window.player.pause().then(()=>{
             set_paused(true)
             console.log("Paused the player")
@@ -157,11 +161,13 @@ function NewPlayer() {
     const nextTrack = () =>{
         if(isNull(SpotifyPlayer)) return console.log("Player null")
         if(isUndefined(SpotifyPlayer)) return console.log("player is undefined")
+        if(!isNull(window.player))
         window.player.getCurrentState().then((state)=>{
             if(!isNull(state) && !isUndefined(state)){
                 if(state.track_window.next_tracks.length == 0){
                     fetch_next()
                 }else{
+                    if(!isNull(window.player))
                     window.player.nextTrack().then(()=>console.log("Next track")).catch((e)=>console.error(e))
                 }
             }
@@ -170,11 +176,13 @@ function NewPlayer() {
     const prevTrack = () =>{
         if(isNull(SpotifyPlayer)) return console.log("Player null")
         if(isUndefined(SpotifyPlayer)) return console.log("Player is undefined")
+        if(!isNull(window.player))
         window.player.previousTrack().then(()=>console.log("Previous track")).catch((e)=>console.error(e))
     }
 
     const seek = (val: number) =>{
         if(isNull(SpotifyPlayer)) return console.log("player is null")
+        if(!isNull(window.player))
         window.player.seek((val * duration)/100).then(()=>console.log("Seeking "+ val)).catch((e)=>console.log(e))
     }
 
