@@ -18,6 +18,7 @@ export default function handler   (
     } ).then(({data})=>{
         res.status(200).send({access_token: data.access_token})
     }).catch((e)=>{
+        console.log(e.response.data)
         res.status(500).send(e)
     })
 }

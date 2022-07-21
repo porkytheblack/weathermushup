@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Flex, chakra, IconButton, Icon } from '@chakra-ui/react'
+import { Flex, chakra, IconButton, Icon, Button, Text } from '@chakra-ui/react'
 import { ChevronLeftIcon, ChevronRightIcon, HamburgerIcon } from "@chakra-ui/icons"
 import Image from 'next/image'
 import React, { useContext, useEffect, useRef, useState } from 'react'
@@ -11,14 +11,17 @@ import { SpotifyAuthContext } from '../Layout'
 import { useAtom } from 'jotai'
 import { authToken, player_state_atom, state_tick } from '../jotai/state'
 import usePlayer from '../hooks/usePlayer'
+import dynamic from 'next/dynamic'
 const NewPlayer = dynamic(import("../components/NewPlayer"), {
     ssr: false
 })
-import dynamic from 'next/dynamic'
 import { isNull, isUndefined } from 'lodash'
-import LocationButton from '../components/LocationButton'
+import { get_images } from '../helpers/images'
+import { BASE_URL } from '../helpers/CONSTANTS'
+import { ImageInfo } from '../globaltypes'
+import { useRouter } from 'next/router'
 
-function Player({access_token}: {access_token: string | null}) {
+function Player({access_token, images}: {access_token: string | null, images: ImageInfo[]}) {
     const {user, logout} = useAuth0()
     const [spotify_token, set_spotify_token] = useState<string>("")
     const [, set_access_token] = useAtom(authToken)
@@ -26,6 +29,7 @@ function Player({access_token}: {access_token: string | null}) {
     const [state, ] = useAtom(player_state_atom)
     const [tick, ]  =useAtom(state_tick)
 
+    const {push} = useRouter()
     
    
 
@@ -60,13 +64,19 @@ function Player({access_token}: {access_token: string | null}) {
         })
     }, [state,tick])
   return (
-    <Flex justify={"flex-start"} alignItems="flex-start" pos="relative" backgroundImage={"/unsplash_images/raining.jpg"} backgroundSize="cover" backgroundRepeat="no-repeat" width="100vw" height="100vh"  >
+    <Flex justify={"flex-start"} alignItems="flex-start" pos="relative" bg={images[0].color} backgroundImage={images[0].urls[0]} backgroundSize="cover" backgroundRepeat="no-repeat" width="100vw" height="100vh"  >
             <Flex {...FlexColCenterCenter} width="65%" height="100%"  >
                 <Flex {...FlexColCenterStart}   width="80%" height="90%" >
                     <Flex {...FlexRowCenterBetween} width="100%" marginBottom={"20px"}  >
-                        <IconButton onClick={()=>{logout()}} aria-label='hamburger_icon' bg="none" _active={{background: "none"}} _hover={{background: "none"}} >
-                                <HamburgerIcon color="white" fontSize="24px" /> 
-                        </IconButton>
+                        <Button onClick={()=>{
+                            winow.player?.disconnect()
+                            push("/setup")
+                            
+                        }} >
+                            <Text color="black" fontWeight="18px" fontWeight="semibold" >
+                                👈 doesn't sound right?
+                            </Text>
+                        </Button>
                         <chakra.p fontSize="24px" textTransform={"uppercase"} fontWeight={"semibold"} >
                                 weathermushup
                         </chakra.p>
@@ -119,12 +129,18 @@ export default Player
 
 
 export async function getServerSideProps(context: any ){
-    axios.get("/api/auth0/accesstoken").then(({data})=>{
-        return {
-            props: {
-                access_token: data.access_token
+    return axios.get(`${BASE_URL}/api/auth0/accesstoken`).then(({data})=>{
+        return get_images().then((d)=>{
+            return {
+                props: {
+                    access_token: data.access_token,
+                    images: d
+                }
             }
-        }
+        }).catch((e)=>{
+            console.log(e)
+        })
+        
     }).catch((e)=>{
         return {
             props: {

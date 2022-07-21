@@ -2,7 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react'
 import { Alert, AlertIcon, Button, Divider, Flex, Text, useToast } from '@chakra-ui/react'
 import axios from 'axios'
 import { useAtom } from 'jotai'
-import { isNull } from 'lodash'
+import { isEmpty, isNull } from 'lodash'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useEffect, useState } from 'react'
@@ -15,6 +15,7 @@ import ArtisitSelection from '../components/Selection/ArtisitSelection'
 import MoodSelection from '../components/Selection/MoodSelection'
 import StateModal from '../components/StateModals'
 import { generate_filter } from '../helpers/filter'
+import { BASE_URL } from '../helpers/CONSTANTS'
 
 function Setup({access_token}: {access_token: string | null}) {
     const [question, set_question] = useState<"location"| "mood" | "artist" | "genre" | "weather">("location")
@@ -35,6 +36,12 @@ function Setup({access_token}: {access_token: string | null}) {
         isClosable: true
     })
 
+
+    useEffect(()=>{
+        if(!isEmpty(prev_setup.location) && !isEmpty(prev_setup.weather)){
+            set_question("mood")
+        }
+    }, [])
     
 
 
@@ -48,8 +55,11 @@ function Setup({access_token}: {access_token: string | null}) {
             push("/")
         }
 
-        if(typeof user !== "undefined"){
-            axios.get(`https://dev-1r9889va.us.auth0.com/api/v2/users/${user?.sub}`, {
+    }, [,user])
+
+    useEffect(()=>{
+        if(isEmpty(user)) return ()=>{}
+        axios.get(`https://dev-1r9889va.us.auth0.com/api/v2/users/${user?.sub}`, {
                 headers: {
                     "Authorization": `Bearer ${access_token}`
                 }
@@ -59,7 +69,6 @@ function Setup({access_token}: {access_token: string | null}) {
             }).catch((e)=>{
                 console.log(e)
             })  
-        }
     }, [,user])
 
 
@@ -246,7 +255,7 @@ export default Setup
 
 
 export async function getServerSideProps(context: any ){
-    axios.get("/api/auth0/accesstoken").then(({data})=>{
+    return axios.get(`${BASE_URL}/api/auth0/accesstoken`).then(({data})=>{
         return {
             props: {
                 access_token: data.access_token
