@@ -4,7 +4,7 @@ import { isNull, isNumber, isString, isUndefined } from 'lodash'
 import { parseUrl } from 'next/dist/shared/lib/router/utils/parse-url'
 import React, { useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
-import { authToken, CurrentDeviceAtom, current_track_atom, next_uri_atom, tick_up_device } from '../jotai/state'
+import { authToken, CurrentDeviceAtom, current_filter, current_track_atom, next_uri_atom, tick_up_device } from '../jotai/state'
 
 function useTracks() {
     const [access_token, ] = useAtom(authToken)
@@ -15,9 +15,10 @@ function useTracks() {
     const [current_device, set_it] = useAtom(CurrentDeviceAtom)
     const [fetch_limit, ] = useState(20)
     const [, up_device] = useAtom(tick_up_device)
+    const [filter, ] = useAtom(current_filter)
     // const [current_track, set_track ] = useAtom(current_track_atom)
     
-    const playlists_query  = useQuery([current_playlist, access_token, offset_filter],()=> axios.get(`https://api.spotify.com/v1/search?q=${current_query}&type=track${offset_filter}`, {
+    const playlists_query  = useQuery([current_playlist, access_token, offset_filter, filter],()=> axios.get(`https://api.spotify.com/v1/search?q=${filter}&type=track${offset_filter}`, {
         headers: {
             "Authorization": `Bearer ${access_token}`,
             "Content-Type": "application/json"   

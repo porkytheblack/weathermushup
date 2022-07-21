@@ -18,7 +18,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   
   return (  
       <QueryClientProvider client={query_client} > 
-        <Auth0Provider redirectUri={typeof window !== "undefined" ? window.location.origin : "" } domain={domain} clientId={client_id}  >    
+        <Auth0Provider redirectUri={typeof window !== "undefined" ? window.location.origin : "" } domain={"dev-1r9889va.us.auth0.com"} clientId={"SGrJW5dCxNq1YakYf1GWXFTGE9fVbUWH"}  >    
           <ChakraProvider theme={theme} >
               <GlobalStylesConfig />  
               <Layout>

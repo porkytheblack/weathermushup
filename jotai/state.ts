@@ -1,5 +1,6 @@
 import { atom } from "jotai"
 import {atomWithStorage} from "jotai/utils"
+import { WeatherInfo } from "../globaltypes"
 
 export const authToken = atomWithStorage<string | null>("access_token",null)
 
@@ -50,4 +51,8 @@ export const setup_atom = atomWithStorage<{
     genre: null
 })
 
+
+export const current_weather = atomWithStorage<WeatherInfo | null>("current_weather", null)
+
+export const current_filter = atomWithStorage<string>("current_filter", "")
 

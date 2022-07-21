@@ -72,7 +72,7 @@ function ArtisitSelection({onChange}:{onChange: (val:string)=>void}) {
                     Hang On ... 🤖
                 </Text>
             </Flex>  :  artisits?.map((artist)=>{
-                const radio = getRadioProps()
+                const radio = getRadioProps({value: artist.name})
                 return (
                     <ArtisitCard key={artist.name} {...radio} >
                         <Text color="white" >

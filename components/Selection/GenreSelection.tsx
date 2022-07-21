@@ -47,7 +47,10 @@ function GenreSelection({onChange}:{onChange: (val: string)=>void}) {
     const {getRootProps, getRadioProps} = useRadioGroup({
         name: "genres",
         defaultValue: genres[0],
-        onChange: onChange
+        onChange: (val)=>{
+            console.log(val)
+            onChange(val)
+        }
     })
 
     const group = getRootProps()
@@ -68,7 +71,7 @@ function GenreSelection({onChange}:{onChange: (val: string)=>void}) {
                     Hang On ... 🤖
                 </Text>
             </Flex>  :  genres.map((genre: string)=>{
-                const radio = getRadioProps()
+                const radio = getRadioProps({value: genre})
                 return (
                     <GenreCard key={genre} {...radio} >
                         <Text color="white" fontSize="20px" >

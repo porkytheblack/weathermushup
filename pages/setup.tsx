@@ -1,5 +1,5 @@
 import { useAuth0 } from '@auth0/auth0-react'
-import { Button, Divider, Flex, Text } from '@chakra-ui/react'
+import { Alert, AlertIcon, Button, Divider, Flex, Text, useToast } from '@chakra-ui/react'
 import axios from 'axios'
 import { useAtom } from 'jotai'
 import { isNull } from 'lodash'
@@ -9,11 +9,12 @@ import React, { useEffect, useState } from 'react'
 import ChooseWeather from '../components/Selection/ChooseWeather'
 import GenreSelection from '../components/Selection/GenreSelection'
 import LocationButton from '../components/LocationButton'
-import { authToken, setup_atom, user_location_atom } from '../jotai/state'
+import { authToken, current_filter, setup_atom, user_location_atom } from '../jotai/state'
 import { FlexColCenterCenter, FlexColCenterStart, FlexRowCenterBetween, FlexRowCenterCenter } from '../utils/FlexConfigs'
 import ArtisitSelection from '../components/Selection/ArtisitSelection'
 import MoodSelection from '../components/Selection/MoodSelection'
 import StateModal from '../components/StateModals'
+import { generate_filter } from '../helpers/filter'
 
 function Setup({access_token}: {access_token: string | null}) {
     const [question, set_question] = useState<"location"| "mood" | "artist" | "genre" | "weather">("location")
@@ -22,9 +23,24 @@ function Setup({access_token}: {access_token: string | null}) {
     const {user, logout} = useAuth0()
     const {push} = useRouter()
     const [prev_setup, set_setup] = useAtom(setup_atom)
+    const [modal, set_modal] = useState<boolean>(false)
+    const [, set_filter] = useAtom(current_filter)
+
+    const selectOneToast = useToast({
+        render: ()=><Alert status="error" >
+            <AlertIcon/>
+            Choose an option to continue <br />
+            this is needed inorder to filter your results
+        </Alert>,
+        isClosable: true
+    })
+
     
 
 
+    useEffect(()=>{
+        console.log(prev_setup)
+    }, [prev_setup])
 
     useEffect(()=>{
 
@@ -49,16 +65,23 @@ function Setup({access_token}: {access_token: string | null}) {
 
     const next_question = (dir: "next" | "back") =>{
         if(dir == "next"){
+            if(prev_setup[question] == null && question !== "location") return selectOneToast({
+                position: "top"
+            })
             if(question == "location"){
                 if(user_loc == null) return set_question("weather")
                 set_question("mood")
             } 
             if(question == "weather") return set_question("mood")
-            if(question == "mood") return set_question("artist")
-            if(question == "artist") return set_question("genre")
-        }else if(dir == "back"){
+            if(question == "mood") return set_question("genre")
             if(question == "genre") return set_question("artist")
-            if(question == "artist") return set_question("mood")
+            if(question == "artist") {
+                set_modal(true)
+                
+            }
+        }else if(dir == "back"){
+            if(question == "artist") return set_question("genre")
+            if(question == "genre") return set_question("mood")
             if(question == "mood") return set_question("location")
         }
     }
@@ -72,9 +95,20 @@ function Setup({access_token}: {access_token: string | null}) {
     }
   return (
     <Flex pos="relative" backgroundImage={"/unsplash_images/listening_from.jpg"} bgSize="cover" bgRepeat={"no-repeat"} {...FlexRowCenterBetween}  w='100vw' h='100vh' overflow="hidden" >
-        <StateModal>
-
-        </StateModal>
+        {modal && <StateModal onClose={()=>{
+            set_modal(false)
+        }} promiseAction={()=>new Promise((res, rej)=>{
+            setTimeout(()=>{
+                generate_filter(prev_setup).then((filter)=>{
+                    set_filter(filter)
+                    res(true)
+                    push("/player")
+                }).catch((e)=>{
+                    //do nothing
+                    rej(e)
+                })
+            }, 3000)
+        })} />}
         <Flex width="100%" height="100%"  {...FlexRowCenterBetween}  backdropFilter={"auto"} backdropBlur="12px"  >
 
             <Flex order={["location", "artist"].includes(question) ? 1 : 2} pos="relative" w='50%' h='100vh' {...FlexColCenterCenter}  >
@@ -96,6 +130,7 @@ function Setup({access_token}: {access_token: string | null}) {
                                 We usually use your location to determine this, but...
                             </Text>
                             <ChooseWeather onChange={(weather)=>{
+                                console.log(weather)
                                 set_setup({
                                     ...prev_setup,
                                     weather
@@ -154,12 +189,18 @@ function Setup({access_token}: {access_token: string | null}) {
                     
                     <Flex {...FlexColCenterCenter} w="100%" mt="20px" >
                         {["weather", "location"].includes(question) && <>
-                        {question == "location" &&  <LocationButton/>  }
-                        <Flex {...FlexRowCenterCenter} w="100%" padding="10px"  >
+                        {question == "location" &&  <LocationButton onChange={(weather, loc)=>{
+                            set_setup({
+                                ...prev_setup,
+                                weather,
+                                location: loc
+                            })
+                        }} />  }
+                        {question == "location" && <Flex {...FlexRowCenterCenter} w="100%" padding="10px"  >
                             <Text  color="white" fontSize="18px" fontWeight={"semibold"} >
                                 Or
                             </Text>
-                        </Flex>
+                        </Flex>}
                         </>}
                         <Button w="300px" onClick={()=>next_question("next")} >
                             Continue
@@ -205,24 +246,13 @@ export default Setup
 
 
 export async function getServerSideProps(context: any ){
-    return axios.post("https://dev-1r9889va.us.auth0.com/oauth/token", {
-        client_id: process.env.client_id,
-        client_secret: process.env.client_secret,
-        audience: "https://dev-1r9889va.us.auth0.com/api/v2/",
-        grant_type: "client_credentials"
-    }, {
-        headers: {
-            'Content-Type': "application/json"
-        }
-    } ).then((res)=>{
+    axios.get("/api/auth0/accesstoken").then(({data})=>{
         return {
             props: {
-                access_token: res.data.access_token
+                access_token: data.access_token
             }
         }
     }).catch((e)=>{
-        console.log("Error fetching access token")
-        console.log(e)
         return {
             props: {
                 access_token: null

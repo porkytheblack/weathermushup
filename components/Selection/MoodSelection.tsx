@@ -66,7 +66,7 @@ function MoodSelection({onChange}: {onChange: (val: string)=>void}) {
     <Flex {...group} {...FlexRowStartBetween} flexWrap="wrap"  >
         {
             options.map((val)=>{
-                const radio = getRadioProps()
+                const radio = getRadioProps({value: val})
                 return (
                         <MoodCard key={val} {...radio}>
                             <Text color="white" >

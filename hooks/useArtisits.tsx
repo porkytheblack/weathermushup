@@ -4,7 +4,7 @@ import { isNull, isUndefined } from 'lodash'
 import React, { useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
 import { BASE_SPOTIFY_URL, ME_SPOTIFY_URL } from '../helpers/CONSTANTS'
-import { authToken } from '../jotai/state'
+import { authToken, setup_atom } from '../jotai/state'
 
 interface extendedArtist extends Spotify.Artist {
     external_urls : {
@@ -31,8 +31,9 @@ interface extendedArtist extends Spotify.Artist {
 function useArtisits() {
     const [access_token, ] = useAtom(authToken)
     const [artisits, set_artisits] = useState<extendedArtist[]>([])
-    const {data, isLoading, isError, error} = useQuery(["artists_query"], ()=>axios.get(
-        `${ME_SPOTIFY_URL}/following?type=artist&offset=0&limit=30`, {
+    const [setup, ]= useAtom(setup_atom)
+    const {data, isLoading, isError, error} = useQuery(["artists_query", setup.genre], ()=>axios.get(
+        `${BASE_SPOTIFY_URL}/search?q=genre:${setup.genre}&type=artist&offset=0&limit=50`, {
             headers: {
                 "Authorization": `Bearer ${access_token}`,
                 "Content-Type": "application/json"
@@ -47,8 +48,6 @@ function useArtisits() {
     useEffect(()=>{
         if(isNull(data) || isUndefined(data) || isLoading || isError|| !isNull(error)) return ()=>{}
         set_artisits(data.artists.items)
-        console.log(data.artists.items)
-        
     }, [data, isLoading, isError, error])
     return (
         {

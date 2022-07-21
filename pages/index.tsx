@@ -1,5 +1,6 @@
 import { useAuth0 } from '@auth0/auth0-react'
 import { Flex, Text, chakra } from '@chakra-ui/react'
+import { isEmpty, isUndefined } from 'lodash'
 import type { NextPage } from 'next'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
@@ -7,11 +8,13 @@ import { useEffect } from 'react'
 import { FlexColCenterCenter, FlexRowCenterCenter } from '../utils/FlexConfigs'
 
 const Home: NextPage = () => {
-  const {loginWithPopup, user ,isLoading, error} = useAuth0()
+  const {loginWithPopup, user ,isLoading, error, isAuthenticated} = useAuth0()
   const {push} = useRouter()
   useEffect(()=>{
-    if(isLoading || error || user == null) return ()=>{ } 
-    push("/setup")
+    if(isLoading || error || user == null || isEmpty(user) || isUndefined(user)) return ()=>{ } 
+    if(isAuthenticated){
+      push("/setup")
+    }
   }, [, isLoading, user, error])
   return (
     <Flex width="100vw" backgroundImage={"/unsplash_images/music_waves.png"} backgroundSize="cover" backgroundRepeat={"no-repeat"}  height="100vh" {...FlexColCenterCenter}  >

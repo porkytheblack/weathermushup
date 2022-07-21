@@ -109,7 +109,6 @@ function Player({access_token}: {access_token: string | null}) {
                     </chakra.p>
                     
                 </Flex>
-                <LocationButton/>
             </Flex>
             
     </Flex>
@@ -120,24 +119,13 @@ export default Player
 
 
 export async function getServerSideProps(context: any ){
-    return axios.post("https://dev-1r9889va.us.auth0.com/oauth/token", {
-        client_id: process.env.client_id,
-        client_secret: process.env.client_secret,
-        audience: "https://dev-1r9889va.us.auth0.com/api/v2/",
-        grant_type: "client_credentials"
-    }, {
-        headers: {
-            'Content-Type': "application/json"
-        }
-    } ).then((res)=>{
+    axios.get("/api/auth0/accesstoken").then(({data})=>{
         return {
             props: {
-                access_token: res.data.access_token
+                access_token: data.access_token
             }
         }
     }).catch((e)=>{
-        console.log("Error fetching access token")
-        console.log(e)
         return {
             props: {
                 access_token: null

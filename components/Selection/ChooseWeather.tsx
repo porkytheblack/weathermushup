@@ -60,7 +60,7 @@ function ChooseWeather({onChange}:{onChange: (val: string)=>void}) {
     <Flex {...group} {...FlexRowStartBetween} flexWrap="wrap"  >
         {
             options.map((val, key)=>{
-                const radio = getRadioProps()
+                const radio = getRadioProps({value: val})
                 return (
                         <WeatherCard key={val} {...radio}>
                             <Image src={`/illustrations/${val}.svg`} width={100} height={150} alt="weather" />
