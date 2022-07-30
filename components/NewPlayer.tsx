@@ -4,9 +4,9 @@ import { Flex, Icon, IconButton, RangeSlider, RangeSliderFilledTrack, RangeSlide
 import { Pause, PlayArrow } from '@mui/icons-material'
 import axios from 'axios'
 import { useAtom } from 'jotai'
-import { isNull, isUndefined } from 'lodash'
+import { isEmpty, isNull, isUndefined } from 'lodash'
 import React, { useEffect, useState } from 'react'
-import { addPlayer, authToken, CurrentDeviceAtom, player_state_atom, SpotifyPlayerInstance, state_tick_device, tick_up } from '../jotai/state'
+import { addPlayer, authToken, CurrentDeviceAtom, playerNo, player_state_atom, SpotifyPlayerInstance, state_tick_device, tick_up } from '../jotai/state'
 import { FlexColCenterCenter, FlexRowCenterAround } from '../utils/FlexConfigs'
 import useTracks from './../hooks/useTracks'
 import SpotifyPlayerComponent from './SpotifyPlayer'
@@ -30,6 +30,7 @@ function NewPlayer() {
     const [duration, set_duration] = useState<number>(0)
     const [position, set_position] = useState<number>(0)
     const [active, set_active] = useState<boolean>(false)
+    const [player_no, ] = useAtom(playerNo)
     const [, add_player] = useAtom(addPlayer)
     const [, up] = useAtom(tick_up)
     const [tick, ] = useAtom(state_tick_device)
@@ -37,10 +38,11 @@ function NewPlayer() {
     const {track_uris, loading_playlists, error_playlists, pl_error, fetch_next} = useTracks()
 
     useEffect(()=>{
-        console.log("New Device 40")
         if(access_token == null) return ()=>{}
-        if(track_uris.length == 0 || loading_playlists || error_playlists || pl_error !== null) return ()=>{}
-        if(current_device.length !== 0) return ()=>{} 
+        if( error_playlists || pl_error !== null) return ()=>{}
+        if(!isEmpty(current_device)) return ()=>{}
+        console.log(player_no)
+        if(player_no > 0  ) return ()=> {}
         const script = document.createElement("script")
             script.src = "https://sdk.scdn.co/spotify-player.js"
             script.async = true             
@@ -53,7 +55,6 @@ function NewPlayer() {
                         getOAuthToken: (cb) => {cb(access_token)},
                         volume: 0.5
                     }) 
-                    add_player()
                     window.player = player
                     window.player.addListener('ready', (data)=>{
                         set_state("ready")
@@ -114,18 +115,21 @@ function NewPlayer() {
                         console.log("An error occured while making the request")
                         })
                     window.player.connect()
+                    add_player()
+
 
                       
             }
 
             return ()=>{
                 if(!isNull(SpotifyPlayer)){
-                   console.log(SpotifyPlayer)
+                    set_current_device("")
                    console.log("Unmounting")
-                   SpotifyPlayer.disconnect()
-                   if(!isNull(window.player))
-                   window.player.disconnect()
-                
+                   if(!isNull(window.player)){
+                        // window.player.disconnect()
+                        set_player_state("not_ready")
+                   }    
+                   
                 }
                 
             }
@@ -162,7 +166,7 @@ function NewPlayer() {
         if(isNull(SpotifyPlayer)) return console.log("Player null")
         if(isUndefined(SpotifyPlayer)) return console.log("player is undefined")
         if(!isNull(window.player))
-        window.player.getCurrentState().then((state)=>{
+        window?.player?.getCurrentState().then((state)=>{
             if(!isNull(state) && !isUndefined(state)){
                 if(state.track_window.next_tracks.length == 0){
                     fetch_next()

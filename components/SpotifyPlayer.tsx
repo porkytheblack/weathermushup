@@ -7,12 +7,17 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons'
 import { Pause, PlayArrow, SyncOutlined } from '@mui/icons-material'
 import useTracks from '../hooks/useTracks'
 import { useAtom } from 'jotai'
-import { authToken, CurrentDeviceAtom, next_uri_atom } from '../jotai/state'
+import { authToken, CurrentDeviceAtom, next_uri_atom, state_tick } from '../jotai/state'
 import axios from 'axios'
 import TrackComponent from './TrackComponent'
 
 function SpotifyPlayerComponent({seek,player, position, duration, paused, toggle_play_pause, prevTrack, player_state, nextTrack}:{player: Spotify.Player | null, position: number, duration: number, paused: boolean, toggle_play_pause: ()=>void, prevTrack: ()=>void, player_state: "ready" | "not_ready", nextTrack: ()=>void, seek: (val: number)=>void }) {
   const {try_refetch} = useTracks()
+  const [current_device, ] = useAtom(CurrentDeviceAtom)
+  const [tick,] = useAtom(state_tick)
+  useEffect(()=>{
+    console.log(current_device)
+  }, [,current_device,tick])
 
     
 

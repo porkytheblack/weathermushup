@@ -7,10 +7,8 @@ import { FlexColCenterBetween, FlexColCenterCenter, FlexColCenterEnd, FlexColCen
 import { PlayArrow } from '@mui/icons-material'
 import axios from 'axios'
 import { useAuth0 } from '@auth0/auth0-react'
-import { SpotifyAuthContext } from '../Layout'
 import { useAtom } from 'jotai'
 import { authToken, player_state_atom, state_tick } from '../jotai/state'
-import usePlayer from '../hooks/usePlayer'
 import dynamic from 'next/dynamic'
 const NewPlayer = dynamic(import("../components/NewPlayer"), {
     ssr: false
@@ -20,6 +18,7 @@ import { get_images } from '../helpers/images'
 import { BASE_URL } from '../helpers/CONSTANTS'
 import { ImageInfo } from '../globaltypes'
 import { useRouter } from 'next/router'
+import { NextPageContext } from 'next'
 
 function Player({access_token, images}: {access_token: string | null, images: ImageInfo[]}) {
     const {user, logout} = useAuth0()
@@ -30,6 +29,8 @@ function Player({access_token, images}: {access_token: string | null, images: Im
     const [tick, ]  =useAtom(state_tick)
 
     const {push} = useRouter()
+
+    const get_random = (len: number) => Math.floor(Math.random() * len)
     
    
 
@@ -48,7 +49,7 @@ function Player({access_token, images}: {access_token: string | null, images: Im
                 console.log(e)
             })  
         }
-       
+        
      
 
     }, [,user])
@@ -64,16 +65,16 @@ function Player({access_token, images}: {access_token: string | null, images: Im
         })
     }, [state,tick])
   return (
-    <Flex justify={"flex-start"} alignItems="flex-start" pos="relative" bg={images[0].color} backgroundImage={images[0].urls[0]} backgroundSize="cover" backgroundRepeat="no-repeat" width="100vw" height="100vh"  >
+    <Flex justify={"flex-start"} alignItems="flex-start" pos="relative" bg={images[get_random(images.length)].color} backgroundImage={images[get_random(images.length)].urls[0]} backgroundSize="cover" backgroundRepeat="no-repeat" width="100vw" height="100vh"  >
             <Flex {...FlexColCenterCenter} width="65%" height="100%"  >
                 <Flex {...FlexColCenterStart}   width="80%" height="90%" >
                     <Flex {...FlexRowCenterBetween} width="100%" marginBottom={"20px"}  >
                         <Button onClick={()=>{
-                            winow.player?.disconnect()
+                            window.player?.disconnect()
                             push("/setup")
                             
                         }} >
-                            <Text color="black" fontWeight="18px" fontWeight="semibold" >
+                            <Text color="black" fontWeight="semibold" >
                                 👈 doesn't sound right?
                             </Text>
                         </Button>
@@ -128,13 +129,16 @@ function Player({access_token, images}: {access_token: string | null, images: Im
 export default Player
 
 
-export async function getServerSideProps(context: any ){
+export async function getServerSideProps(context: NextPageContext ){
     return axios.get(`${BASE_URL}/api/auth0/accesstoken`).then(({data})=>{
-        return get_images().then((d)=>{
+        console.log(context.query)
+        const {weather} = context.query
+        console.log(weather)
+        return get_images(weather).then((d)=>{
             return {
                 props: {
                     access_token: data.access_token,
-                    images: d
+                images: d
                 }
             }
         }).catch((e)=>{

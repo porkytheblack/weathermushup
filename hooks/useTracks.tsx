@@ -1,10 +1,10 @@
 import axios from 'axios'
 import { useAtom } from 'jotai'
-import { isNull, isNumber, isString, isUndefined } from 'lodash'
+import { isEmpty, isNull, isNumber, isString, isUndefined } from 'lodash'
 import { parseUrl } from 'next/dist/shared/lib/router/utils/parse-url'
 import React, { useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
-import { authToken, CurrentDeviceAtom, current_filter, current_track_atom, next_uri_atom, tick_up_device } from '../jotai/state'
+import { authToken, CurrentDeviceAtom, current_filter, current_track_atom, next_uri_atom, player_state_atom, tick_up_device } from '../jotai/state'
 
 function useTracks() {
     const [access_token, ] = useAtom(authToken)
@@ -16,6 +16,7 @@ function useTracks() {
     const [fetch_limit, ] = useState(20)
     const [, up_device] = useAtom(tick_up_device)
     const [filter, ] = useAtom(current_filter)
+    const [player_state, ] = useAtom(player_state_atom)
     // const [current_track, set_track ] = useAtom(current_track_atom)
     
     const playlists_query  = useQuery([current_playlist, access_token, offset_filter, filter],()=> axios.get(`https://api.spotify.com/v1/search?q=${filter}&type=track${offset_filter}`, {
@@ -28,7 +29,7 @@ function useTracks() {
     })              
 
 
-    const player_query = useQuery(["player"], ()=>axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${current_device}`,JSON.stringify({ uris: track_uris }), {
+    const player_query = useQuery(["player", current_device, access_token, player_state], ()=>axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${current_device}`,JSON.stringify({ uris: track_uris }), {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${access_token}`    
@@ -61,13 +62,13 @@ function useTracks() {
         set_next_uri(playlists_query.data.tracks.next)
     }, [,playlists_query.isError, playlists_query.isLoading, playlists_query.data])
 
+    
+
     useEffect(()=>{
-        if(isNull(window.player) || isUndefined(window.player)) return ()=>{}
-        const {isLoading, isError, data} = playlists_query
-        if(isLoading || isError || data == null || typeof data == "undefined" ) return ()=>{}
-        player_query.refetch()
-        console.log("New Refetch")
-    }, [current_device,track_uris,])  
+        if(!isEmpty(playlists_query.data) && !isEmpty(current_device)){
+            player_query.refetch()
+        }
+    }, [current_device, playlists_query.data])
 
     const fetch_next = (prev?: boolean) =>{
         const parsed = parseUrl(next_uri)

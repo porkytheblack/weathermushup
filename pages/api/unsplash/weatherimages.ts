@@ -7,6 +7,7 @@ export default function handler(
     res: NextApiResponse
 ) {
     const {weather} = req.query 
+    console.log(weather)
     axios.get(`https://api.unsplash.com/search/photos?query=${weather}`, {
         headers: {
             "Authorization": `Client-ID ${process.env.UNSPLASH_API_KEY}`
@@ -27,7 +28,7 @@ export default function handler(
                 urls: Object.values(urls)
             })
         })
-        console.log(images)
+        // console.log(images)
         res.status(200).send(images)
     }).catch((e)=>{
         res.status(500).send(e.response.data)

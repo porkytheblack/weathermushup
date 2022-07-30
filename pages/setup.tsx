@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useAuth0 } from '@auth0/auth0-react'
 import { Alert, AlertIcon, Button, Divider, Flex, Text, useToast } from '@chakra-ui/react'
 import axios from 'axios'
@@ -9,7 +10,7 @@ import React, { useEffect, useState } from 'react'
 import ChooseWeather from '../components/Selection/ChooseWeather'
 import GenreSelection from '../components/Selection/GenreSelection'
 import LocationButton from '../components/LocationButton'
-import { authToken, current_filter, setup_atom, user_location_atom } from '../jotai/state'
+import { authToken, current_filter, current_weather, setup_atom, user_location_atom } from '../jotai/state'
 import { FlexColCenterCenter, FlexColCenterStart, FlexRowCenterBetween, FlexRowCenterCenter } from '../utils/FlexConfigs'
 import ArtisitSelection from '../components/Selection/ArtisitSelection'
 import MoodSelection from '../components/Selection/MoodSelection'
@@ -26,6 +27,7 @@ function Setup({access_token}: {access_token: string | null}) {
     const [prev_setup, set_setup] = useAtom(setup_atom)
     const [modal, set_modal] = useState<boolean>(false)
     const [, set_filter] = useAtom(current_filter)
+    const [loc_weather, ] = useAtom(current_weather)
 
     const selectOneToast = useToast({
         render: ()=><Alert status="error" >
@@ -111,7 +113,7 @@ function Setup({access_token}: {access_token: string | null}) {
                 generate_filter(prev_setup).then((filter)=>{
                     set_filter(filter)
                     res(true)
-                    push("/player")
+                    push(`/player?weather=${loc_weather?.weather_text}`)
                 }).catch((e)=>{
                     //do nothing
                     rej(e)
