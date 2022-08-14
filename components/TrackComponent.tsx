@@ -17,6 +17,7 @@ function TrackComponent({position, handleChange}: {position: number, handleChang
         interval_ref.current = setInterval(()=>{
             if(!isNull(window.player) && !isUndefined(window.player)){
                 window?.player?.getCurrentState().then((state)=>{
+                    console.log(state)
                     if(!isNull(state) && !isUndefined(state)){
                         set_pos((state.position*100)/state.duration)
                         if(state.duration - state.position <= 10){

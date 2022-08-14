@@ -2,18 +2,18 @@
 import { Flex, chakra, IconButton, Icon, Button, Text } from '@chakra-ui/react'
 import { ChevronLeftIcon, ChevronRightIcon, HamburgerIcon } from "@chakra-ui/icons"
 import Image from 'next/image'
-import React, { useContext, useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { FlexColCenterBetween, FlexColCenterCenter, FlexColCenterEnd, FlexColCenterStart, FlexRowCenterAround, FlexRowCenterBetween, FlexRowCenterCenter, FlexRowCenterEnd } from '../utils/FlexConfigs'
 import { PlayArrow } from '@mui/icons-material'
 import axios from 'axios'
 import { useAuth0 } from '@auth0/auth0-react'
 import { useAtom } from 'jotai'
-import { authToken, player_state_atom, state_tick } from '../jotai/state'
+import { authToken, CurrentDeviceAtom, playerNo, player_state_atom, state_tick } from '../jotai/state'
 import dynamic from 'next/dynamic'
 const NewPlayer = dynamic(import("../components/NewPlayer"), {
     ssr: false
 })
-import { isNull, isUndefined } from 'lodash'
+import { isEmpty, isNull, isUndefined } from 'lodash'
 import { get_images } from '../helpers/images'
 import { BASE_URL } from '../helpers/CONSTANTS'
 import { ImageInfo } from '../globaltypes'
@@ -27,11 +27,28 @@ function Player({access_token, images}: {access_token: string | null, images: Im
     const [track, set_track] = useState<Spotify.Track| null>(null)
     const [state, ] = useAtom(player_state_atom)
     const [tick, ]  =useAtom(state_tick)
+    const [, set_player_no] = useAtom(playerNo)
+    const [, set_current_device] = useAtom(CurrentDeviceAtom)
 
-    const {push} = useRouter()
+    const { push, events } = useRouter()
 
     const get_random = (len: number) => Math.floor(Math.random() * len)
-    
+    const memo_image = useMemo(()=>images[get_random(images.length)], [
+        track
+    ])
+
+    useEffect(()=>{
+        events.on("routeChangeStart", (url)=>{
+            if(url.includes("setup")){
+                console.log("Going to setup")
+                if(!isUndefined(window.player) && !isNull(window.player)) {
+                    window.player.disconnect()
+                    set_player_no(0)
+                    set_current_device("")
+                }
+            }
+        })
+    })
    
 
     useEffect(()=>{
@@ -55,27 +72,31 @@ function Player({access_token, images}: {access_token: string | null, images: Im
     }, [,user])
 
     useEffect(()=>{
-        window?.player?.getCurrentState().then((state: Spotify.PlaybackState | null)=>{
-            if(state){
-                console.log(state.track_window.current_track)
-                set_track(state.track_window.current_track)
-            }
-        }).catch((e)=>{
-            console.log("Unable to get current state")
-        })
+        if(!isEmpty(window.player) && !isUndefined(window.player)){
+            window?.player?.getCurrentState().then((state: Spotify.PlaybackState | null)=>{
+                if(state){
+                    console.log(state.track_window.current_track)
+                    set_track(state.track_window.current_track)
+                }
+            }).catch((e)=>{
+                console.log("Unable to get current state")
+            })
+        }
     }, [state,tick])
+
   return (
-    <Flex justify={"flex-start"} alignItems="flex-start" pos="relative" bg={images[get_random(images.length)].color} backgroundImage={images[get_random(images.length)].urls[0]} backgroundSize="cover" backgroundRepeat="no-repeat" width="100vw" height="100vh"  >
+    <Flex justify={"flex-start"} alignItems="flex-start" pos="relative" bg={memo_image.color} backgroundImage={memo_image.urls[0]} backgroundSize="cover" backgroundRepeat="no-repeat" width="100vw" height="100vh"  >
             <Flex {...FlexColCenterCenter} width="65%" height="100%"  >
                 <Flex {...FlexColCenterStart}   width="80%" height="90%" >
                     <Flex {...FlexRowCenterBetween} width="100%" marginBottom={"20px"}  >
                         <Button onClick={()=>{
                             window.player?.disconnect()
+                            
                             push("/setup")
                             
                         }} >
                             <Text color="black" fontWeight="semibold" >
-                                👈 doesn't sound right?
+                                👈 doesn&apos;t sound right?
                             </Text>
                         </Button>
                         <chakra.p fontSize="24px" textTransform={"uppercase"} fontWeight={"semibold"} >
@@ -134,7 +155,7 @@ export async function getServerSideProps(context: NextPageContext ){
         console.log(context.query)
         const {weather} = context.query
         console.log(weather)
-        return get_images(weather).then((d)=>{
+        return get_images("night").then((d)=>{
             return {
                 props: {
                     access_token: data.access_token,

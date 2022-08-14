@@ -264,6 +264,7 @@ export async function getServerSideProps(context: any ){
             }
         }
     }).catch((e)=>{
+        console.log(e)
         return {
             props: {
                 access_token: null

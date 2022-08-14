@@ -4,10 +4,11 @@ import { isEmpty, isNull, isNumber, isString, isUndefined } from 'lodash'
 import { parseUrl } from 'next/dist/shared/lib/router/utils/parse-url'
 import React, { useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
-import { authToken, CurrentDeviceAtom, current_filter, current_track_atom, next_uri_atom, player_state_atom, tick_up_device } from '../jotai/state'
+import { authToken, CurrentDeviceAtom, current_filter, current_track_atom, next_uri_atom, playerNo, player_state_atom, tick_up_device } from '../jotai/state'
 
 function useTracks() {
     const [access_token, ] = useAtom(authToken)
+    const [p_n, ] =  useAtom(playerNo)
     const [offset_filter, set_offset_filter] = useState<string>("&offset=0&limit=2")
     const [current_playlist, set_current_playlist] = useState<string>("")
     const [current_query, set_current_query] = useState<string>("Running up the hill by kate bush")
@@ -29,26 +30,25 @@ function useTracks() {
     })              
 
 
-    const player_query = useQuery(["player", current_device, access_token, player_state], ()=>axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${current_device}`,JSON.stringify({ uris: track_uris }), {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${access_token}`    
-        }
-    }).then((res)=>{   
-        console.log("Done fetching")
-        if(!isNull(window.player) && !isUndefined(window.player)){
-            window.player?.resume().then(()=>console.log("Resumed Player")).catch((e)=>console.log("Unable to resume player"))
-        }else{
-            console.log("Player is Null or Undefined")
-        }
-    }).catch((e)=>{
-        console.log(e) 
-        up_device()
-        set_it("")
-        window.player = null
-        }), {
-            enabled: false
-        })
+    // const player_query = useQuery(["player", current_device, access_token, player_state, p_n], ()=>axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${current_device}`,JSON.stringify({ uris: track_uris }), {
+    //     headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': `Bearer ${access_token}`    
+    //     }
+    // }).then((res)=>{   
+    //     console.log("Done fetching")
+    //     if(!isNull(window.player) && !isUndefined(window.player)){
+    //         window.player?.resume().then(()=>console.log("Resumed Player")).catch((e)=>console.log("Unable to resume player"))
+    //     }else{
+    //         console.log("Player is Null or Undefined")
+    //     }
+    // }).catch((e)=>{
+    //     console.log(e) 
+    //     up_device()
+    //     window.player = null
+    //     }), {
+    //         enabled: false || !isEmpty(current_device)
+    //     })
 
 
     const [track_uris, set_track_uris] = useState<string[]>([])
@@ -60,15 +60,46 @@ function useTracks() {
         var uris = playlists_query.data.tracks.items.map((item: any)=>item.uri)
         set_track_uris(uris) 
         set_next_uri(playlists_query.data.tracks.next)
-    }, [,playlists_query.isError, playlists_query.isLoading, playlists_query.data])
+    }, [,playlists_query.isError, playlists_query.isLoading, playlists_query.data, access_token])
+
+    useEffect(()=>{
+        if(!isEmpty(track_uris)){
+            
+            start_player(current_device)
+        }
+    }, [track_uris])
 
     
 
-    useEffect(()=>{
-        if(!isEmpty(playlists_query.data) && !isEmpty(current_device)){
-            player_query.refetch()
+    // useEffect(()=>{
+    //     if(!isEmpty(playlists_query.data) && !isEmpty(current_device)){
+    //         player_query.refetch()
+    //     }
+    // }, [current_device, playlists_query.data])
+
+    const start_player = (device_id: string) =>{
+        console.log("Starting player")
+        console.log(device_id)
+        if(!isEmpty(device_id?.trim())){
+            console.log(device_id)
+            set_it(device_id)
+            // player_query.refetch()
+            axios.post(
+                `/api/spotify/device`,
+                {
+                    device_id: device_id,
+                    access_token: access_token,
+                    track_uris
+                }
+            ).then((res)=>{
+                console.log(res)
+                
+            }).catch((e)=>{
+                console.log(e)
+            })
+
         }
-    }, [current_device, playlists_query.data])
+    }
 
     const fetch_next = (prev?: boolean) =>{
         const parsed = parseUrl(next_uri)
@@ -104,7 +135,8 @@ function useTracks() {
         track_uris,
         fetch_next,
         offset_filter,
-        try_refetch: player_query.refetch
+        try_refetch: ()=>  start_player(current_device), 
+        start_player
     }
   )
 }

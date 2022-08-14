@@ -34,106 +34,130 @@ function NewPlayer() {
     const [, add_player] = useAtom(addPlayer)
     const [, up] = useAtom(tick_up)
     const [tick, ] = useAtom(state_tick_device)
+    const [toggle, set_toggle] = useState<()=>Promise<void> | null>()
 
-    const {track_uris, loading_playlists, error_playlists, pl_error, fetch_next} = useTracks()
+
+    const {track_uris, loading_playlists, error_playlists, pl_error, fetch_next, start_player} = useTracks()
 
     useEffect(()=>{
+        var current_device_id = "";
         if(access_token == null) return ()=>{}
         if( error_playlists || pl_error !== null) return ()=>{}
-        if(!isEmpty(current_device)) return ()=>{}
-        console.log(player_no)
-        if(player_no > 0  ) return ()=> {}
-        const script = document.createElement("script")
-            script.src = "https://sdk.scdn.co/spotify-player.js"
-            script.async = true             
-            document.body.appendChild(script)
-           
-            window.onSpotifyWebPlaybackSDKReady  = () =>{
-
-                    const player = new window.Spotify.Player({
-                        name: "Web Playback SDK",
-                        getOAuthToken: (cb) => {cb(access_token)},
-                        volume: 0.5
-                    }) 
-                    window.player = player
-                    window.player.addListener('ready', (data)=>{
-                        set_state("ready")
-                        set_player(player)
-                        set_player_state("ready")
-                        set_current_device(data.device_id)
-                        up()
-                    })  
- 
-                    window.player.addListener('not_ready', (data: any)=>{
-                        set_state("not_ready")
-                        console.log("The player is not ready")
-                        set_player_state("not_ready") 
-                        up()
-                    })
-
-                    window.player.addListener("initialization_error", ()=>{
-                        console.log("An error occured during initialization")
-                        set_initialization_error(true)
-                        up()
-                    })
-
-                    window.player.addListener("authentication_error", (err)=>{
-                        console.log(err)
-                        console.log("Failed to authenticate user")
-                    })
-
-                    window.player.addListener("autoplay_failed", ()=>{
-                        console.log("Auto play error")
-                    })  
-
-                    window.player.addListener('player_state_changed', ((state) => {
-                            if(!state){
-                                set_active(false)
-                                return  null  
-                            }
-                            console.log(state)
-                            up()
-                            set_active(true)
-                            set_track(state.track_window.current_track)
-                            set_paused(state.paused)
-
-                            set_duration(state.duration)
-                            set_position((state.position * 100)/state.duration)
-                            
-                    }))
-                    axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${current_device}`,JSON.stringify({ uris: track_uris }), {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${access_token}`    
-                        }
-                    }).then((res)=>{
-                        console.log("Connected successfully")
-                        if(!isNull(window.player))
-                        window.player.resume()
-                    }).catch((e)=>{
-                        console.log(e)    
-                        console.log("An error occured while making the request")
-                        })
-                    window.player.connect()
-                    add_player()
-
-
-                      
+        // if(!isEmpty(current_device)) return ()=>{}
+        // console.log(player_no)
+            console.log(document.getElementById(access_token))
+            if(isNull(document.getElementById(access_token))){
+                const script = document.createElement("script")
+                script.id = access_token
+                script.src = "https://sdk.scdn.co/spotify-player.js"
+                script.async = true             
+                document.body.appendChild(script)
             }
+            if(
+                // !isNull(document.getElementById(access_token)) && isUndefined(window.player) && player_no === 0
+                true
+                ){
+                console.log("Making player")
+                window.onSpotifyWebPlaybackSDKReady  = () =>{
+                        console.log("Spotify Web Playback SDK Ready")
+                        const player = new window.Spotify.Player({
+                            name: "Web Playback SDK",
+                            getOAuthToken: (cb) => {cb(access_token)},
+                            volume: 0.5
+                        }) 
+                        window.player = player
+                        window.player.addListener('ready', (data)=>{
+                            console.log("player is ready")
+                            set_state("ready")
+                            set_player(player)
+                            set_player_state("ready")
+                            current_device_id = data.device_id
+                            set_current_device(data.device_id)
+                            console.log(data.device_id)
+                            up()
+                        })  
+                        window.player.addListener('not_ready', (data: any)=>{
+                            set_state("not_ready")
+                            console.log("The player is not ready")
+                            set_player_state("not_ready") 
+                            up()
+                        })
+                        window.player.addListener("initialization_error", ()=>{
+                            console.log("An error occured during initialization")
+                            set_initialization_error(true)
+                            up()
+                        })
+
+                        window.player.addListener("authentication_error", (err)=>{
+                            console.log(err)
+                            console.log("Failed to authenticate user")
+                        })
+
+                        window.player.addListener("autoplay_failed", ()=>{
+                            console.log("Auto play error")
+                        })  
+
+                        window.player.addListener('player_state_changed', ((state) => {
+                                if(!state){
+                                    set_active(false)
+                                    return  null  
+                                }
+                                console.log(state)
+                                up()
+                                set_active(true)
+                                set_track(state.track_window.current_track)
+                                set_paused(state.paused)
+                                set_duration(state.duration)
+                                set_position((state.position * 100)/state.duration)
+                                
+                        }))
+                        // axios.put(`https://api.spotify.com/v1/me/player/play?device_id=${current_device}`,JSON.stringify({ uris: track_uris }), {
+                        //     headers: {
+                        //         'Content-Type': 'application/json',
+                        //         'Authorization': `Bearer ${access_token}`    
+                        //     }
+                        // }).then((res)=>{
+                        //     console.log("Connected successfully")
+                        //     if(!isNull(window.player))
+                        //     window.player.resume()
+                        // }).catch((e)=>{
+                        //     console.log(e)    
+                        //     console.log("An error occured while making the request")
+                        //     })
+                        window.player.connect().then((success)=>{
+                            if(success){
+                                console.log("Connected successfully")
+                                start_player(current_device_id)
+                            }else{
+                                console.log('Unable to connect new player')
+                            }
+                            console.log("Connected to Spotify")
+                        }).catch((e)=>{
+                            console.log("Unable ti connect to Spotify")
+                            console.log(e)
+                        })
+                        if(!isUndefined(window.player)){
+                            set_toggle(window.player.togglePlay)
+                            
+                        }
+
+                        add_player()
+                }
+            }
+           
+
 
             return ()=>{
-                if(!isNull(SpotifyPlayer)){
-                    set_current_device("")
-                   console.log("Unmounting")
-                   if(!isNull(window.player)){
-                        // window.player.disconnect()
-                        set_player_state("not_ready")
-                   }    
+                // if(!isNull(window.player) && !isUndefined(window.player)){
+                //     // set_current_device("")
+                //     console.log("Unmounting")
+                //     // window.player?.disconnect()
+                //     // set_player_state("not_ready")
                    
-                }
+                // }
                 
             }
-    },[access_token, track_uris, loading_playlists, error_playlists, pl_error])
+    },[access_token, track_uris, loading_playlists, error_playlists, pl_error,])
 
     // useEffect(()=>{
     //     if(isNull(SpotifyPlayer)) return ()=>{}
@@ -145,27 +169,22 @@ function NewPlayer() {
     
 
     const toggle_play_pause = () =>{
-        console.log("Ok I get it")
-        console.log(SpotifyPlayer)
-        if( isNull(SpotifyPlayer)) return console.log("Player is null")
-        console.log("Not null")
-        if(isNull(SpotifyPlayer)) return console.log("Player null")
-        if(!isNull(window.player))
-        if(paused) return window.player.resume().then(()=>{
-            set_paused(false)
-            console.log("Resumed the player")   
-        }).catch((e)=>console.error(e))
-        if(!isNull(window.player))
-        if(!paused) return window.player.pause().then(()=>{
-            set_paused(true)
-            console.log("Paused the player")
-        }).catch((e)=>console.error(e))
+        // if(!isNull(window.player))
+        // if(paused) return window.player.resume().then(()=>{
+        //     set_paused(false)
+        //     console.log("Resumed the player")   
+        // }).catch((e)=>console.error(e))
+        // if(!isNull(window.player))
+        // if(!paused) return window.player.pause().then(()=>{
+        //     set_paused(true)
+        //     console.log("Paused the player")
+        // }).catch((e)=>console.error(e))
+        if(!isEmpty(toggle) && !isUndefined(toggle)) return toggle()
+        console.log("Toggle is not defined")
     }     
 
     const nextTrack = () =>{
-        if(isNull(SpotifyPlayer)) return console.log("Player null")
-        if(isUndefined(SpotifyPlayer)) return console.log("player is undefined")
-        if(!isNull(window.player))
+        if(!isNull(window.player) )
         window?.player?.getCurrentState().then((state)=>{
             if(!isNull(state) && !isUndefined(state)){
                 if(state.track_window.next_tracks.length == 0){
@@ -185,7 +204,6 @@ function NewPlayer() {
     }
 
     const seek = (val: number) =>{
-        if(isNull(SpotifyPlayer)) return console.log("player is null")
         if(!isNull(window.player))
         window.player.seek((val * duration)/100).then(()=>console.log("Seeking "+ val)).catch((e)=>console.log(e))
     }

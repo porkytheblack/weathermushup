@@ -12,16 +12,12 @@ import axios from 'axios'
 import TrackComponent from './TrackComponent'
 
 function SpotifyPlayerComponent({seek,player, position, duration, paused, toggle_play_pause, prevTrack, player_state, nextTrack}:{player: Spotify.Player | null, position: number, duration: number, paused: boolean, toggle_play_pause: ()=>void, prevTrack: ()=>void, player_state: "ready" | "not_ready", nextTrack: ()=>void, seek: (val: number)=>void }) {
-  const {try_refetch} = useTracks()
+  const {try_refetch, start_player} = useTracks()
   const [current_device, ] = useAtom(CurrentDeviceAtom)
   const [tick,] = useAtom(state_tick)
   useEffect(()=>{
-    console.log(current_device)
+    // start_player(current_device)
   }, [,current_device,tick])
-
-    
-
-
     
   return (
     <Flex width="100%" {...FlexColCenterCenter}  >
@@ -44,7 +40,7 @@ function SpotifyPlayerComponent({seek,player, position, duration, paused, toggle
                         </IconButton>
                     </Flex>
                     <Flex {...FlexRowCenterCenter} >
-                      <IconButton onClick={()=>try_refetch()}  borderRadius={"1000px"} _hover={{background: "#fa175f"}} bg="none" aria-label='prev'  >
+                      <IconButton onClick={()=>start_player(current_device)}  borderRadius={"1000px"} _hover={{background: "#fa175f"}} bg="none" aria-label='prev'  >
                                 <Icon as={SyncOutlined} color="white" w={8} h={8}  />
                         </IconButton>
                         <Text ml="10px" >
