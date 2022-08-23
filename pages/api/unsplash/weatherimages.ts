@@ -12,7 +12,8 @@ export default function handler(
         headers: {
             "Authorization": `Client-ID ${process.env.UNSPLASH_API_KEY}`
         }
-    }).then(({data})=>{
+    }).then(({data, status, statusText})=>{
+        console.log(data, "Howdy", status, statusText)
         const images = data.results.map(({width, height, user, color, description, urls, links}: any)=>{
             return({
                 width,

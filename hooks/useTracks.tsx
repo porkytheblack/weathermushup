@@ -2,8 +2,9 @@ import axios from 'axios'
 import { useAtom } from 'jotai'
 import { isEmpty, isNull, isNumber, isString, isUndefined } from 'lodash'
 import { parseUrl } from 'next/dist/shared/lib/router/utils/parse-url'
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useQuery } from 'react-query'
+import { SpotifyWrapperContext } from '../components/SpotifyPlayerWrapper'
 import { authToken, CurrentDeviceAtom, current_filter, current_track_atom, next_uri_atom, playerNo, player_state_atom, tick_up_device } from '../jotai/state'
 
 function useTracks() {
@@ -18,6 +19,9 @@ function useTracks() {
     const [, up_device] = useAtom(tick_up_device)
     const [filter, ] = useAtom(current_filter)
     const [player_state, ] = useAtom(player_state_atom)
+    const [tracks, setTracks] = useState<any[]>([])
+    const {player} = useContext(SpotifyWrapperContext)
+    
     // const [current_track, set_track ] = useAtom(current_track_atom)
     
     const playlists_query  = useQuery([current_playlist, access_token, offset_filter, filter],()=> axios.get(`https://api.spotify.com/v1/search?q=${filter}&type=track${offset_filter}`, {
@@ -50,24 +54,40 @@ function useTracks() {
     //         enabled: false || !isEmpty(current_device)
     //     })
 
-
     const [track_uris, set_track_uris] = useState<string[]>([])
+
 
     useEffect(()=>{    
         console.log("Access token", access_token)
         const {isLoading, isError, data} = playlists_query
         if(isLoading || isError || data == null || typeof data == "undefined" ) return ()=>{}
         var uris = playlists_query.data.tracks.items.map((item: any)=>item.uri)
+        setTracks(playlists_query.data.tracks.items)
         set_track_uris(uris) 
         set_next_uri(playlists_query.data.tracks.next)
     }, [,playlists_query.isError, playlists_query.isLoading, playlists_query.data, access_token])
 
-    useEffect(()=>{
-        if(!isEmpty(track_uris)){
-            
-            start_player(current_device)
-        }
-    }, [track_uris])
+
+    /**
+     * @todo remove this from comment
+     */
+
+    // useEffect(()=>{
+    //     if(!isEmpty(track_uris)){
+    //         player?.getCurrentState().then((state)=>{
+    //             if(state){
+    //                 if(state.paused){
+    //                     start_player(current_device)
+    //                 }else{
+    //                     start_player(current_device)
+
+    //                 }
+    //             }
+    //         }).catch((e)=>{
+
+    //         })
+    //     }
+    // }, [track_uris, ])
 
     
 
@@ -136,7 +156,9 @@ function useTracks() {
         fetch_next,
         offset_filter,
         try_refetch: ()=>  start_player(current_device), 
-        start_player
+        start_player,
+        // track: current_track,
+        tracks
     }
   )
 }

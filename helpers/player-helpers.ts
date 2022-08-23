@@ -1,7 +1,7 @@
 import axios from "axios"
 import { isEmpty, isNull } from "lodash"
 
-export const is_track_last = (track: string, track_uris: string[]) => track_uris.indexOf(track) == track_uris.length -1
+export const is_track_last = (track: string, track_uris: string[]) => track_uris.indexOf(track) == track_uris?.length -1
 
 export const go_to_next = (track: string, access_token: string | null, device: string) => new Promise((res, rej)=>{
     if(isNull(access_token)) return rej(false)

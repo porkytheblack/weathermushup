@@ -12,7 +12,5 @@ const breakpoints = createBreakpoints({
 })
 
 export const theme = extendTheme({
-    initialColorMode: "light",
-    useSystemColorMode: false,
     breakpoints
 })

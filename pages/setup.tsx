@@ -122,7 +122,7 @@ function Setup({access_token}: {access_token: string | null}) {
         })} />}
         <Flex width="100%" height="100%"  {...FlexRowCenterBetween}  backdropFilter={"auto"} backdropBlur="12px"  >
 
-            <Flex order={["location", "artist"].includes(question) ? 1 : 2} pos="relative" w='50%' h='100vh' {...FlexColCenterCenter}  >
+            <Flex order={["location", "artist"]?.includes(question) ? 1 : 2} pos="relative" w='50%' h='100vh' {...FlexColCenterCenter}  >
                     {question == "location" &&<>
                         <Text color="white" mb="10px" textAlign={"center"} fontSize="24px" fontWeight="semibold" >
                             Where are you listenting from ?

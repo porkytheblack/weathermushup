@@ -8,7 +8,7 @@ export default function handler(
     res: NextApiResponse
 ){
     const { current_weather, access_token} = req.query
-    if(typeof access_token == "undefined" || typeof current_weather == "undefined" || access_token.length == 0) return res.status(400).send({Error: "Invalid request"})
+    if(typeof access_token == "undefined" || typeof current_weather == "undefined" || access_token?.length == 0) return res.status(400).send({Error: "Invalid request"})
     axios.get(`https://api.spotify.com/v1/search?q=${current_weather}&type=track`, {
         headers: {
             "Authorization": `Bearer ${access_token}`,

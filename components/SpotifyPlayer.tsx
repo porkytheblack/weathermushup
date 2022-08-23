@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/aria-proptypes */
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect } from 'react'
+import React, { useContext, useEffect } from 'react'
 import {Button, chakra, Flex, Icon, IconButton, RangeSlider, RangeSliderFilledTrack, RangeSliderThumb, RangeSliderTrack, Text} from "@chakra-ui/react"
 import { FlexColCenterCenter, FlexRowCenterAround, FlexRowCenterCenter } from '../utils/FlexConfigs'
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons'
@@ -10,20 +10,31 @@ import { useAtom } from 'jotai'
 import { authToken, CurrentDeviceAtom, next_uri_atom, state_tick } from '../jotai/state'
 import axios from 'axios'
 import TrackComponent from './TrackComponent'
+import { SpotifyWrapperContext } from './SpotifyPlayerWrapper'
+import { isUndefined } from 'lodash'
 
-function SpotifyPlayerComponent({seek,player, position, duration, paused, toggle_play_pause, prevTrack, player_state, nextTrack}:{player: Spotify.Player | null, position: number, duration: number, paused: boolean, toggle_play_pause: ()=>void, prevTrack: ()=>void, player_state: "ready" | "not_ready", nextTrack: ()=>void, seek: (val: number)=>void }) {
+function SpotifyPlayerComponent() {
+  const {
+    seek,
+    toggle_play_pause,
+    nextTrack,
+    prevTrack,
+    position,
+    paused,
+    duration,
+    track
+  } = useContext(SpotifyWrapperContext)
   const {try_refetch, start_player} = useTracks()
   const [current_device, ] = useAtom(CurrentDeviceAtom)
   const [tick,] = useAtom(state_tick)
+
   useEffect(()=>{
     // start_player(current_device)
   }, [,current_device,tick])
     
   return (
     <Flex width="100%" {...FlexColCenterCenter}  >
-            <TrackComponent position={position} handleChange={(val)=>{
-                seek(val)
-            }} />       
+            <TrackComponent  />       
             <Flex w="100%" marginTop={"30px"} {...FlexRowCenterAround}  >
                         <IconButton onClick={prevTrack}  borderRadius={"1000px"} _hover={{background: "#fa175f"}} bg="none" aria-label='prev'  >
                                 <ChevronLeftIcon color="white" w={8} h={8}  />

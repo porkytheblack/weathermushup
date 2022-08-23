@@ -28,8 +28,12 @@ export default function Handler (
                 }
             }
         ).then((d)=>{
+            console.log(d.data)
             res.status(200).send(d)
         }).catch((e)=>{
+            console.log(e.response)
+            var r = e.response
+            console.log(r)
             res.status(500).send(e)
         })
     }else{

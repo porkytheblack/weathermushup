@@ -16,7 +16,7 @@ export const addPlayer = atom(null, (get, set, _)=>{
 
 export const CurrentDeviceAtom = atomWithStorage<string>("current_device_id", "")
 
-export const player_state_atom = atomWithStorage<"ready"| "not_ready">("state", "not_ready")
+export const player_state_atom = atomWithStorage<"ready"| "not_ready" | "intialization_error" | "authentication_error"  | "autoplay_failed">("state", "not_ready")
 
 export const state_tick  = atom<number>(0)
 export const tick_up = atom(null, (get, set, _)=>{
@@ -55,4 +55,6 @@ export const setup_atom = atomWithStorage<{
 export const current_weather = atomWithStorage<WeatherInfo | null>("current_weather", null)
 
 export const current_filter = atomWithStorage<string>("current_filter", "")
+
+export const script_count_atom = atomWithStorage<number>("script_count", 0)
 
